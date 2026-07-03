@@ -9,12 +9,17 @@
 <body>
 <header>
   <h1>ClubHub Ops Agent</h1>
-  <p>Paste order lines as <code>Product Name, Quantity</code> (one per line), then run the agent to validate the order and check minimum order quantities (MOQ).</p>
+  <p>Paste or upload order lines as <code>Product Name, Quantity</code> (one per line), then run the agent to validate the order and check minimum order quantities (MOQ).</p>
 </header>
 
 <main>
   <section class="panel">
     <h2>Order Input</h2>
+    <div class="upload-row">
+      <label for="orderFileInput" class="button">Upload CSV / TXT File</label>
+      <input id="orderFileInput" type="file" accept=".csv,.txt" class="hidden">
+      <span id="uploadedFileName" class="file-name"></span>
+    </div>
     <textarea id="orderInput" rows="8" placeholder="Sublimated Jersey, 8&#10;Cotton Rugby Jersey, 24&#10;Socks, 10"></textarea>
     <button id="runButton" type="button">Run Agent</button>
   </section>

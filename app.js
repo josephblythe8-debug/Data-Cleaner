@@ -22,6 +22,8 @@ const mappingProduct = document.getElementById('mappingProduct');
 const mappingType = document.getElementById('mappingType');
 const mappingList = document.getElementById('mappingList');
 const notifyAdminBtn = document.getElementById('notifyAdminBtn');
+const orderFileInput = document.getElementById('orderFileInput');
+const uploadedFileName = document.getElementById('uploadedFileName');
 
 const PRODUCT_TYPE_KEYWORDS = {
   SOCKS: ['sock'],
@@ -43,17 +45,25 @@ function detectProductType(productName) {
   return null;
 }
 
+function isHeaderRow(line) {
+  const firstCell = line.split(',')[0].trim().toLowerCase();
+  return firstCell === 'product' || firstCell === 'product name';
+}
+
 function parseOrderInput(raw) {
-  return raw
+  const lines = raw
     .split('\n')
     .map(line => line.trim())
-    .filter(Boolean)
-    .map(line => {
-      const parts = line.split(',').map(p => p.trim());
-      const product = parts[0] || '';
-      const qty = Number(parts[1]);
-      return { product, qty: Number.isFinite(qty) ? qty : NaN };
-    });
+    .filter(Boolean);
+
+  if (lines.length && isHeaderRow(lines[0])) lines.shift();
+
+  return lines.map(line => {
+    const parts = line.split(',').map(p => p.trim());
+    const product = parts[0] || '';
+    const qty = Number(parts[1]);
+    return { product, qty: Number.isFinite(qty) ? qty : NaN };
+  });
 }
 
 function validateOrder(items) {
@@ -214,6 +224,22 @@ mappingList.addEventListener('click', e => {
     saveMappings();
     renderMappings();
   }
+});
+
+orderFileInput.addEventListener('change', () => {
+  const file = orderFileInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    orderInput.value = reader.result;
+    uploadedFileName.textContent = file.name;
+    runAgent();
+  };
+  reader.onerror = () => {
+    showBanner(validationBanner, `Could not read file "${file.name}".`);
+  };
+  reader.readAsText(file);
 });
 
 runButton.addEventListener('click', runAgent);
