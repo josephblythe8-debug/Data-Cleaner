@@ -1,8 +1,5 @@
-import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useColourNames } from '@/hooks/useColourNames'
 import { buildColourCode, MAX_GARMENT_COLOURS } from '@/lib/colourCode'
@@ -13,11 +10,13 @@ interface ColourSlotsInputProps {
   onChange: (colours: string[]) => void
 }
 
+/**
+ * Pick up to 3 colours from the fixed company colour table — the
+ * coordinator just picks the name; the 2-letter code and the padded
+ * colour_code segment (e.g. MERDXX) are entirely automatic.
+ */
 export function ColourSlotsInput({ value, onChange }: ColourSlotsInputProps) {
-  const { colourNames, addColourName } = useColourNames()
-  const [adding, setAdding] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newAbbreviation, setNewAbbreviation] = useState('')
+  const { colourNames } = useColourNames()
 
   const byName = new Map(colourNames.map((c) => [c.name, c]))
   const abbreviations = value.map((name) => byName.get(name)?.abbreviation ?? '??')
@@ -40,17 +39,6 @@ export function ColourSlotsInput({ value, onChange }: ColourSlotsInputProps) {
 
   function optionsFor(currentValue: string | undefined) {
     return colourNames.filter((c) => c.name === currentValue || !value.includes(c.name))
-  }
-
-  async function handleAddNewColour() {
-    const name = newName.trim()
-    const abbreviation = newAbbreviation.trim().toUpperCase()
-    if (!name || abbreviation.length !== 2) return
-    const colour = await addColourName({ name, abbreviation })
-    if (value.length < MAX_GARMENT_COLOURS) addSlot(colour.name)
-    setAdding(false)
-    setNewName('')
-    setNewAbbreviation('')
   }
 
   return (
@@ -82,69 +70,25 @@ export function ColourSlotsInput({ value, onChange }: ColourSlotsInputProps) {
       ))}
 
       {value.length < MAX_GARMENT_COLOURS && (
-        <div className="flex items-center gap-2">
-          <Select key={value.length} value="" onValueChange={addSlot}>
-            <SelectTrigger>
-              <SelectValue placeholder="Add colour..." />
-            </SelectTrigger>
-            <SelectContent>
-              {optionsFor(undefined).map((c) => (
-                <SelectItem key={c.id} value={c.name}>
-                  {c.name} ({c.abbreviation})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button type="button" variant="outline" size="sm" onClick={() => setAdding(true)}>
-            <Plus /> New colour
-          </Button>
-        </div>
+        <Select key={value.length} value="" onValueChange={addSlot}>
+          <SelectTrigger>
+            <Plus className="h-3.5 w-3.5 text-slate-400" />
+            <SelectValue placeholder="Add colour..." />
+          </SelectTrigger>
+          <SelectContent>
+            {optionsFor(undefined).map((c) => (
+              <SelectItem key={c.id} value={c.name}>
+                {c.name} ({c.abbreviation})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
 
       {value.length >= MAX_GARMENT_COLOURS && (
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Maximum of {MAX_GARMENT_COLOURS} colours.
         </p>
-      )}
-
-      {adding && (
-        <div className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="new-colourname-name">Colour Name</Label>
-              <Input
-                id="new-colourname-name"
-                placeholder="Navy"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="new-colourname-abbr">Abbreviation (2 letters)</Label>
-              <Input
-                id="new-colourname-abbr"
-                placeholder="NV"
-                maxLength={2}
-                value={newAbbreviation}
-                onChange={(e) => setNewAbbreviation(e.target.value.toUpperCase())}
-                className="font-mono uppercase"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setAdding(false)}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleAddNewColour}
-              disabled={!newName.trim() || newAbbreviation.trim().length !== 2}
-            >
-              Add to library
-            </Button>
-          </div>
-        </div>
       )}
 
       {value.length > 0 && (

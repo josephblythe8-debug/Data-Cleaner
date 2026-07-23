@@ -14,8 +14,12 @@ export function Preview() {
   const { project, club, configuredGarments } = useStoreProject(projectId)
 
   const products = useMemo(
-    () => generateProducts(configuredGarments, club?.clubCode ?? ''),
-    [configuredGarments, club?.clubCode],
+    () =>
+      generateProducts(configuredGarments, {
+        clubCode: club?.clubCode ?? '',
+        clubName: club?.clubName ?? '',
+      }),
+    [configuredGarments, club?.clubCode, club?.clubName],
   )
 
   const validation = useMemo(
@@ -117,7 +121,12 @@ export function Preview() {
                 <CardTitle className="text-base">{product.productName}</CardTitle>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{product.category}</p>
               </div>
-              <Badge variant="outline">{product.variants.length} variants</Badge>
+              <div className="flex items-center gap-1.5">
+                {product.ageGroup !== 'all' && (
+                  <Badge variant="secondary">{product.ageGroup === 'adults' ? 'Adults' : 'Kids'}</Badge>
+                )}
+                <Badge variant="outline">{product.variants.length} variants</Badge>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="mb-2 font-mono text-xs text-slate-500 dark:text-slate-400">

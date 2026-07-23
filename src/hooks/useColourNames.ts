@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { MOCK_MODE } from '@/lib/config'
-import { generateId, getDb, mutate, subscribe } from '@/lib/dataStore'
+import { getDb, subscribe } from '@/lib/dataStore'
 import { supabase } from '@/lib/supabaseClient'
 import type { ColourName } from '@/lib/types'
 
-export interface ColourNameInput {
-  name: string
-  abbreviation: string
-}
+/**
+ * The colour library is a fixed, centrally-managed reference table (the
+ * real "SKU database" colour sheet) — coordinators pick from it, they
+ * don't add to it, so this hook is read-only.
+ */
 
 function mockSnapshot() {
   return getDb().colourNames
@@ -34,31 +35,8 @@ export function useColourNames() {
     void refetch()
   }, [refetch])
 
-  const addColourName = useCallback(
-    async (input: ColourNameInput): Promise<ColourName> => {
-      if (MOCK_MODE) {
-        const colourName: ColourName = { id: generateId('colourname'), ...input }
-        mutate((db) => {
-          db.colourNames = [...db.colourNames, colourName]
-        })
-        return colourName
-      }
-      const { data, error } = await supabase!
-        .from('colour_library')
-        .insert({ name: input.name, abbreviation: input.abbreviation })
-        .select()
-        .single()
-      if (error) throw error
-      const colourName = fromRow(data)
-      await refetch()
-      return colourName
-    },
-    [refetch],
-  )
-
   return {
     colourNames: MOCK_MODE ? mockColourNames : remoteColourNames,
     loading: MOCK_MODE ? false : loading,
-    addColourName,
   }
 }

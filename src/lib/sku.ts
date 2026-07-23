@@ -22,8 +22,14 @@ export interface SkuSourceGarment {
   colourCode: string
 }
 
-/** The literal size segment used on parent (non-variant) SKUs. */
-export const PARENT_SIZE_SEGMENT = 'ALL'
+/**
+ * The size segment used on a parent (non-variant) SKU. Per the real
+ * ClubHub SKU convention, a parent row's size segment is the AGE GROUP the
+ * product belongs to (ADLT/KIDS), since kids and adults get split into
+ * separate products. "ALL" is reserved for garments that aren't split by
+ * age at all (socks, headwear) or that end up with no sizes selected.
+ */
+export type ParentSizeSegment = 'ADLT' | 'KIDS' | 'ALL'
 
 /** Joins structured parts into the canonical SKU string. Pure, no lookups. */
 export function buildSku(parts: SkuParts): string {
@@ -31,14 +37,18 @@ export function buildSku(parts: SkuParts): string {
   return [range, style, '0', team, colour, size].join('-')
 }
 
-/** Builds the parent product SKU (size segment is literally "ALL"). */
-export function buildParentSku(garment: SkuSourceGarment, clubCode: string): string {
+/** Builds a parent product SKU for the given age-group size segment. */
+export function buildParentSku(
+  garment: SkuSourceGarment,
+  clubCode: string,
+  sizeSegment: ParentSizeSegment,
+): string {
   return buildSku({
     range: garment.rangeCode,
     style: garment.styleCode,
     team: clubCode,
     colour: garment.colourCode,
-    size: PARENT_SIZE_SEGMENT,
+    size: sizeSegment,
   })
 }
 
@@ -74,9 +84,14 @@ export function runSkuAssertions(): SkuAssertion[] {
 
   return [
     {
-      description: 'Club Polo parent SKU',
-      actual: buildParentSku(clubPolo, clubCode),
-      expected: 'LINC-061-0-ETDC-MERDXX-ALL',
+      description: 'Club Polo parent SKU (Adults)',
+      actual: buildParentSku(clubPolo, clubCode, 'ADLT'),
+      expected: 'LINC-061-0-ETDC-MERDXX-ADLT',
+    },
+    {
+      description: 'Club Polo parent SKU (Kids)',
+      actual: buildParentSku(clubPolo, clubCode, 'KIDS'),
+      expected: 'LINC-061-0-ETDC-MERDXX-KIDS',
     },
     {
       description: 'Club Polo variant SKU (Age 5-6)',
@@ -84,14 +99,9 @@ export function runSkuAssertions(): SkuAssertion[] {
       expected: 'LINC-061-0-ETDC-MERDXX-56',
     },
     {
-      description: 'Club Polo variant SKU (Age 7-8)',
-      actual: buildVariantSku(clubPolo, clubCode, '78'),
-      expected: 'LINC-061-0-ETDC-MERDXX-78',
-    },
-    {
-      description: 'Playing Shirt SS parent SKU',
-      actual: buildParentSku(playingShirtSS, clubCode),
-      expected: 'TEAM-327-0-ETDC-CRRDME-ALL',
+      description: 'Playing Shirt SS parent SKU (Adults)',
+      actual: buildParentSku(playingShirtSS, clubCode, 'ADLT'),
+      expected: 'TEAM-327-0-ETDC-CRRDME-ADLT',
     },
     {
       description: 'Playing Shirt SS variant SKU (Small)',

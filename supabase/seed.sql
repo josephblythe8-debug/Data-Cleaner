@@ -7,26 +7,47 @@ values
   ('Western Thunder Cricket Club', 'WTCC', 'Cricket', 'O''Neills')
 on conflict (club_code) do nothing;
 
+-- The fixed company colour reference sheet — coordinators pick from this
+-- table, they don't add to it.
 insert into public.colour_library (name, abbreviation)
 values
+  ('Amber', 'AM'),
+  ('Blue', 'BE'),
+  ('Beige', 'BG'),
+  ('Black', 'BK'),
+  ('Bottle', 'BO'),
+  ('Brown', 'BR'),
+  ('Dark Grey', 'DG'),
+  ('Green', 'GN'),
+  ('Gold', 'GO'),
+  ('Grey', 'GY'),
   ('Marine', 'ME'),
+  ('Maroon', 'MN'),
+  ('Multi', 'MU'),
+  ('Orange', 'OR'),
+  ('Pink', 'PK'),
+  ('Purple', 'PP'),
   ('Red', 'RD'),
-  ('Cream', 'CR')
+  ('Royal', 'RO'),
+  ('Sky', 'SK'),
+  ('Silver', 'SV'),
+  ('White', 'WH'),
+  ('Yellow', 'YW')
 on conflict (name) do nothing;
 
 -- MERDXX = Marine (ME) + Red (RD) + none (XX)
--- CRRDME = Cream (CR) + Red (RD) + Marine (ME)
+-- MNGOXX = Maroon (MN) + Gold (GO) + none (XX)
 insert into public.garments (name, range_code, style_code, colour_code, colours, category, size_template, allow_kids, allow_adults, active)
 values
-  ('Club Polo',        'LINC', '061', 'MERDXX', array['Marine', 'Red'],          'Polo',          'adults', true,  true, true),
-  ('Club Hoodie',       'LINC', '112', 'MERDXX', array['Marine', 'Red'],          'Hoodie',        'adults', true,  true, true),
-  ('Training Tee',      'TEAM', '204', 'CRRDME', array['Cream', 'Red', 'Marine'], 'Tee',           'adults', true,  true, true),
-  ('Training Shorts',   'TEAM', '210', 'CRRDME', array['Cream', 'Red', 'Marine'], 'Shorts',        'adults', true,  true, true),
-  ('Playing Shirt SS',  'TEAM', '327', 'CRRDME', array['Cream', 'Red', 'Marine'], 'Playing Shirt', 'adults', true,  true, true),
-  ('Playing Shirt LS',  'TEAM', '328', 'CRRDME', array['Cream', 'Red', 'Marine'], 'Playing Shirt', 'adults', true,  true, true),
-  ('Playing Pants',     'TEAM', '330', 'CRRDME', array['Cream', 'Red', 'Marine'], 'Pants',         'adults', true,  true, true),
-  ('Club Cap',          'LINC', '400', 'MERDXX', array['Marine', 'Red'],          'Headwear',      'osfa',   false, true, true),
-  ('Club Socks',        'LINC', '410', 'MERDXX', array['Marine', 'Red'],          'Socks',         'socks',  true,  true, true);
+  ('Club Polo',        'LINC', '061', 'MERDXX', array['Marine', 'Red'], 'Polo',          'adults', true,  true, true),
+  ('Club Hoodie',       'LINC', '112', 'MERDXX', array['Marine', 'Red'], 'Hoodie',        'adults', true,  true, true),
+  ('Training Tee',      'TEAM', '204', 'MNGOXX', array['Maroon', 'Gold'], 'Tee',           'adults', true,  true, true),
+  ('Training Shorts',   'TEAM', '210', 'MNGOXX', array['Maroon', 'Gold'], 'Shorts',        'adults', true,  true, true),
+  ('Playing Shirt SS',  'TEAM', '327', 'MNGOXX', array['Maroon', 'Gold'], 'Playing Shirt', 'adults', true,  true, true),
+  ('Playing Shirt LS',  'TEAM', '328', 'MNGOXX', array['Maroon', 'Gold'], 'Playing Shirt', 'adults', true,  true, true),
+  ('Playing Pants',     'TEAM', '330', 'MNGOXX', array['Maroon', 'Gold'], 'Pants',         'adults', true,  true, true),
+  ('Club Cap',          'LINC', '400', 'MERDXX', array['Marine', 'Red'], 'Headwear',      'osfa',   false, true, true),
+  ('Club Socks',        'LINC', '410', 'MERDXX', array['Marine', 'Red'], 'Socks',         'socks',  true,  true, true);
 
 with blueprint as (
   insert into public.blueprints (name, sport)

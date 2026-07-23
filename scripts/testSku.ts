@@ -3,8 +3,8 @@
  * Run with `npm run test:sku`.
  *
  *   1. Asserts the six SKU examples from the spec produce exact strings.
- *   2. Asserts the colour code engine builds MERDXX/CRRDME from named
- *      colours (Marine/Red/Cream), not typed by hand.
+ *   2. Asserts the colour code engine builds MERDXX/MNGOXX from colours
+ *      picked off the fixed company colour table, not typed by hand.
  *   3. Builds the Cricket Template blueprint for club ETDC and prints every
  *      generated parent + variant SKU.
  *   4. Prints a sample BigCommerce CSV (first ~15 rows).
@@ -98,7 +98,7 @@ const configuredGarments: ConfiguredGarment[] = storeGarments.map((sg) => ({
   garment: garmentsById.get(sg.garmentId)!,
 }))
 
-const products = generateProducts(configuredGarments, club.clubCode)
+const products = generateProducts(configuredGarments, club)
 
 for (const product of products) {
   console.log(`\n${product.productName} (${product.category})`)

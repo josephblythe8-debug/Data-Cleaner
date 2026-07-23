@@ -49,6 +49,11 @@ const DEFAULT_WEIGHT = '0.00'
  */
 export function buildExportRows(products: GeneratedProduct[], club: Club | undefined): ExportRow[] {
   const brandName = club?.supplier ?? ''
+  // BigCommerce category is the club's category folder ("STRU - Southport
+  // Tigers Rugby League"), not the garment type — every product in a club's
+  // shop shares it. garment.category (Polo/Hoodie/...) is a separate,
+  // internal-only classification used for search/grouping in the app.
+  const category = club ? `${club.clubCode} - ${club.clubName}` : ''
   const rows: ExportRow[] = []
 
   products.forEach((product, index) => {
@@ -64,7 +69,7 @@ export function buildExportRows(products: GeneratedProduct[], club: Club | undef
       weight: DEFAULT_WEIGHT,
       allowPurchases: 'Y',
       trackInventory: 'Y',
-      category: product.category,
+      category,
       brandName,
     })
 

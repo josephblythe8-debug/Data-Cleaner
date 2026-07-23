@@ -14,12 +14,32 @@ import type {
 } from './types'
 
 // The colour library: name -> 2-letter abbreviation used to build the
-// COLOUR segment of a SKU (see src/lib/colourCode.ts). Extensible via
-// "+ New colour" in the garment form — this is just the starter set.
+// COLOUR segment of a SKU (see src/lib/colourCode.ts). This is the fixed
+// company colour reference sheet — coordinators pick from it, they don't
+// add to it.
 export const seedColourNames: ColourName[] = [
+  { id: 'colour_amber', name: 'Amber', abbreviation: 'AM' },
+  { id: 'colour_blue', name: 'Blue', abbreviation: 'BE' },
+  { id: 'colour_beige', name: 'Beige', abbreviation: 'BG' },
+  { id: 'colour_black', name: 'Black', abbreviation: 'BK' },
+  { id: 'colour_bottle', name: 'Bottle', abbreviation: 'BO' },
+  { id: 'colour_brown', name: 'Brown', abbreviation: 'BR' },
+  { id: 'colour_dark_grey', name: 'Dark Grey', abbreviation: 'DG' },
+  { id: 'colour_green', name: 'Green', abbreviation: 'GN' },
+  { id: 'colour_gold', name: 'Gold', abbreviation: 'GO' },
+  { id: 'colour_grey', name: 'Grey', abbreviation: 'GY' },
   { id: 'colour_marine', name: 'Marine', abbreviation: 'ME' },
+  { id: 'colour_maroon', name: 'Maroon', abbreviation: 'MN' },
+  { id: 'colour_multi', name: 'Multi', abbreviation: 'MU' },
+  { id: 'colour_orange', name: 'Orange', abbreviation: 'OR' },
+  { id: 'colour_pink', name: 'Pink', abbreviation: 'PK' },
+  { id: 'colour_purple', name: 'Purple', abbreviation: 'PP' },
   { id: 'colour_red', name: 'Red', abbreviation: 'RD' },
-  { id: 'colour_cream', name: 'Cream', abbreviation: 'CR' },
+  { id: 'colour_royal', name: 'Royal', abbreviation: 'RO' },
+  { id: 'colour_sky', name: 'Sky', abbreviation: 'SK' },
+  { id: 'colour_silver', name: 'Silver', abbreviation: 'SV' },
+  { id: 'colour_white', name: 'White', abbreviation: 'WH' },
+  { id: 'colour_yellow', name: 'Yellow', abbreviation: 'YW' },
 ]
 
 export const seedClubs: Club[] = [
@@ -43,8 +63,8 @@ export const seedClubs: Club[] = [
 
 // MERDXX = Marine (ME) + Red (RD) + none (XX)
 const MERDXX_COLOURS = ['Marine', 'Red']
-// CRRDME = Cream (CR) + Red (RD) + Marine (ME)
-const CRRDME_COLOURS = ['Cream', 'Red', 'Marine']
+// MNGOXX = Maroon (MN) + Gold (GO) + none (XX)
+const MNGOXX_COLOURS = ['Maroon', 'Gold']
 
 export const seedGarments: Garment[] = [
   {
@@ -78,8 +98,8 @@ export const seedGarments: Garment[] = [
     name: 'Training Tee',
     rangeCode: 'TEAM',
     styleCode: '204',
-    colourCode: 'CRRDME',
-    colours: CRRDME_COLOURS,
+    colourCode: 'MNGOXX',
+    colours: MNGOXX_COLOURS,
     category: 'Tee',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -91,8 +111,8 @@ export const seedGarments: Garment[] = [
     name: 'Training Shorts',
     rangeCode: 'TEAM',
     styleCode: '210',
-    colourCode: 'CRRDME',
-    colours: CRRDME_COLOURS,
+    colourCode: 'MNGOXX',
+    colours: MNGOXX_COLOURS,
     category: 'Shorts',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -104,8 +124,8 @@ export const seedGarments: Garment[] = [
     name: 'Playing Shirt SS',
     rangeCode: 'TEAM',
     styleCode: '327',
-    colourCode: 'CRRDME',
-    colours: CRRDME_COLOURS,
+    colourCode: 'MNGOXX',
+    colours: MNGOXX_COLOURS,
     category: 'Playing Shirt',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -117,8 +137,8 @@ export const seedGarments: Garment[] = [
     name: 'Playing Shirt LS',
     rangeCode: 'TEAM',
     styleCode: '328',
-    colourCode: 'CRRDME',
-    colours: CRRDME_COLOURS,
+    colourCode: 'MNGOXX',
+    colours: MNGOXX_COLOURS,
     category: 'Playing Shirt',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -130,8 +150,8 @@ export const seedGarments: Garment[] = [
     name: 'Playing Pants',
     rangeCode: 'TEAM',
     styleCode: '330',
-    colourCode: 'CRRDME',
-    colours: CRRDME_COLOURS,
+    colourCode: 'MNGOXX',
+    colours: MNGOXX_COLOURS,
     category: 'Pants',
     sizeTemplate: 'adults',
     allowKids: true,

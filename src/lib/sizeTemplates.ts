@@ -53,33 +53,47 @@ export function getSizeDefs(template: SizeTemplateKey): SizeDef[] {
   return SIZE_TEMPLATES[template]
 }
 
+/** A garment's size list for one age group, e.g. all its adult sizes. */
+export interface SizeGroup {
+  /**
+   * "all" means the sizes aren't split by age at all (socks, headwear) —
+   * a single product covers everyone. "adults"/"kids" become separate
+   * products, since real-world pricing (and the parent SKU's ADLT/KIDS
+   * segment) differs per age group.
+   */
+  ageGroup: 'adults' | 'kids' | 'all'
+  sizes: SizeDef[]
+}
+
 /**
- * Resolves the full set of sizes a garment offers given whether kids/adults
- * are enabled for that garment in the current store project.
+ * Resolves the size group(s) a garment offers given whether kids/adults
+ * are enabled for that garment in the current store project. Returns one
+ * entry per age group that should become its own product.
  *
  * - "socks" and "osfa" are flat, self-contained runs (a sock size run
  *   already spans kid-to-adult feet, and OSFA is one size for everyone),
- *   so they ignore the kids/adults toggles entirely.
+ *   so they ignore the kids/adults toggles and always yield a single "all"
+ *   group.
  * - "adults" is the general apparel template: most apparel (polos, tees,
  *   shorts, etc.) is cut in both a kids run and an adults run from the
- *   same garment, so both toggles apply and the result is the union.
+ *   same garment, so each enabled toggle yields its own group/product.
  * - "kids" is a kids-only garment; the adults toggle has no effect since
  *   there is no adult size list attached to it.
  */
-export function resolveGarmentSizes(
+export function resolveGarmentSizeGroups(
   template: SizeTemplateKey,
   includeKids: boolean,
   includeAdults: boolean,
-): SizeDef[] {
+): SizeGroup[] {
   if (template === 'socks' || template === 'osfa') {
-    return getSizeDefs(template)
+    return [{ ageGroup: 'all', sizes: getSizeDefs(template) }]
   }
   if (template === 'kids') {
-    return includeKids ? getSizeDefs('kids') : []
+    return includeKids ? [{ ageGroup: 'kids', sizes: getSizeDefs('kids') }] : []
   }
   // template === 'adults'
-  return [
-    ...(includeAdults ? getSizeDefs('adults') : []),
-    ...(includeKids ? getSizeDefs('kids') : []),
-  ]
+  const groups: SizeGroup[] = []
+  if (includeAdults) groups.push({ ageGroup: 'adults', sizes: getSizeDefs('adults') })
+  if (includeKids) groups.push({ ageGroup: 'kids', sizes: getSizeDefs('kids') })
+  return groups
 }

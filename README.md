@@ -134,18 +134,29 @@ supabase/
 {RANGE}-{STYLE}-0-{TEAM}-{COLOUR}-{SIZE}
 ```
 
-Parent products use the literal size segment `ALL`:
+Kids and adults sizing are always separate products (real pricing differs
+per age group, and BigCommerce needs one product per price point). A
+parent product's size segment is the age group it belongs to — `ADLT` or
+`KIDS` — or `ALL` for garments that aren't split by age at all (socks,
+headwear):
 
 ```
-LINC-061-0-ETDC-MERDXX-ALL
+LINC-061-0-ETDC-MERDXX-ADLT
+LINC-061-0-ETDC-MERDXX-KIDS
+LINC-410-0-ETDC-MERDXX-ALL
 ```
 
 Variants swap in the real size code:
 
 ```
 LINC-061-0-ETDC-MERDXX-56
-TEAM-327-0-ETDC-CRRDME-S
+TEAM-327-0-ETDC-MNGOXX-S
 ```
+
+The COLOUR segment (e.g. `MERDXX`) is never typed by hand — it's built
+from up to 3 colours picked from a fixed company colour table (see
+`src/lib/colourCode.ts`), each with its own 2-letter code (e.g. Marine →
+`ME`), padded with `XX` for any unused slot.
 
 ## Tech stack
 
