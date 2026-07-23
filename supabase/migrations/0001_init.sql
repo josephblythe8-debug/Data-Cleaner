@@ -17,6 +17,20 @@ create table if not exists public.clubs (
 );
 
 -- ---------------------------------------------------------------------------
+-- colours — the clickable CAD swatch library. Not a foreign key on
+-- garments.colour_code: garments store the supplier code as plain text
+-- (matching the SKU engine), and colours are just a friendly, reusable
+-- reference for picking that code instead of typing it.
+-- ---------------------------------------------------------------------------
+create table if not exists public.colours (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  name text not null,
+  swatch_hex text not null,
+  swatch_hex_2 text
+);
+
+-- ---------------------------------------------------------------------------
 -- garments
 -- ---------------------------------------------------------------------------
 create type public.size_template as enum ('kids', 'adults', 'socks', 'osfa');
@@ -88,6 +102,7 @@ create index if not exists store_garments_project_id_idx on public.store_garment
 -- (e.g. scope by an org_id column) if the app grows multi-tenant.
 -- ---------------------------------------------------------------------------
 alter table public.clubs enable row level security;
+alter table public.colours enable row level security;
 alter table public.garments enable row level security;
 alter table public.blueprints enable row level security;
 alter table public.blueprint_garments enable row level security;
@@ -97,6 +112,11 @@ alter table public.store_garments enable row level security;
 create policy "Authenticated users can read clubs" on public.clubs
   for select to authenticated using (true);
 create policy "Authenticated users can write clubs" on public.clubs
+  for all to authenticated using (true) with check (true);
+
+create policy "Authenticated users can read colours" on public.colours
+  for select to authenticated using (true);
+create policy "Authenticated users can write colours" on public.colours
   for all to authenticated using (true) with check (true);
 
 create policy "Authenticated users can read garments" on public.garments

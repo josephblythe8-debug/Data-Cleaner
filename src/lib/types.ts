@@ -9,6 +9,22 @@ export interface Club {
   createdAt: string
 }
 
+/**
+ * A supplier colourway — a CAD (colour-and-design) card the coordinator
+ * can click instead of typing a colour code by hand. Garments reference
+ * a colour by its `code`, since different clubs frequently need the same
+ * garment in a different colourway.
+ */
+export interface ColourOption {
+  id: string
+  code: string
+  name: string
+  /** Primary swatch colour, as a CSS colour (hex). */
+  swatchHex: string
+  /** Optional secondary/trim swatch colour, for two-tone colourways. */
+  swatchHex2?: string
+}
+
 export interface Garment {
   id: string
   name: string

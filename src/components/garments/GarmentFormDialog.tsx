@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ColourPicker } from '@/components/garments/ColourPicker'
 import { SIZE_TEMPLATE_LABELS, type SizeTemplateKey } from '@/lib/sizeTemplates'
 import type { GarmentInput } from '@/hooks/useGarments'
 import type { Garment } from '@/lib/types'
@@ -74,7 +75,7 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>{garment ? 'Edit Garment' : 'Add Garment'}</DialogTitle>
           <DialogDescription>
@@ -93,7 +94,7 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="range">Range Code</Label>
               <Input
@@ -114,16 +115,14 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
                 required
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="colour">Colour Code</Label>
-              <Input
-                id="colour"
-                placeholder="MERDXX"
-                value={form.colourCode}
-                onChange={(e) => setForm({ ...form, colourCode: e.target.value.toUpperCase() })}
-                required
-              />
-            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label>Colour</Label>
+            <ColourPicker
+              value={form.colourCode}
+              onChange={(code) => setForm({ ...form, colourCode: code })}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">

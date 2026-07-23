@@ -7,6 +7,18 @@ values
   ('Western Thunder Cricket Club', 'WTCC', 'Cricket', 'O''Neills')
 on conflict (club_code) do nothing;
 
+insert into public.colours (code, name, swatch_hex, swatch_hex_2)
+values
+  ('MERDXX', 'Maroon / Gold',      '#7f1d3d', '#d4a72c'),
+  ('CRRDME', 'Crimson / Navy',     '#b91c2b', '#1e2a4a'),
+  ('NVYWHT', 'Navy / White',       '#1e2a4a', '#f8fafc'),
+  ('RYLGLD', 'Royal Blue / Gold',  '#1d4ed8', '#d4a72c'),
+  ('BLKRED', 'Black / Red',        '#111827', '#b91c2b'),
+  ('GRNWHT', 'Green / White',      '#166534', '#f8fafc'),
+  ('SKYBLK', 'Sky Blue / Black',   '#0ea5e9', '#111827'),
+  ('PURORG', 'Purple / Orange',    '#6d28d9', '#ea580c')
+on conflict (code) do nothing;
+
 insert into public.garments (name, range_code, style_code, colour_code, category, size_template, allow_kids, allow_adults, active)
 values
   ('Club Polo',        'LINC', '061', 'MERDXX', 'Polo',          'adults', true,  true, true),
