@@ -5,22 +5,16 @@
  *   1. Asserts the six SKU examples from the spec produce exact strings.
  *   2. Asserts the colour code engine builds MERDXX/MNGOXX from colours
  *      picked off the fixed company colour table, not typed by hand.
- *   3. Builds the Cricket Template blueprint for club ETDC and prints every
- *      generated parent + variant SKU.
+ *   3. Builds the demo ETDC store (all 9 garments, real supplier colours)
+ *      and prints every generated parent + variant SKU.
  *   4. Prints a sample BigCommerce CSV (first ~15 rows).
  */
 import { runSkuAssertions } from '../src/lib/sku'
 import { runColourCodeAssertions } from '../src/lib/colourCode'
-import { applyBlueprint } from '../src/lib/blueprintEngine'
 import { generateProducts } from '../src/lib/productGenerator'
 import { renderCsv } from '../src/lib/csvExport'
 import { validateStoreProject } from '../src/lib/validation'
-import {
-  seedBlueprintGarments,
-  seedBlueprints,
-  seedClubs,
-  seedGarments,
-} from '../src/lib/mockData'
+import { seedClubs, seedColourNames, seedGarments, seedStoreGarments } from '../src/lib/mockData'
 import type { ConfiguredGarment } from '../src/lib/types'
 
 function section(title: string) {
@@ -47,7 +41,7 @@ for (const a of assertions) {
 }
 
 if (exitCode !== 0) {
-  console.error('\nSKU assertions FAILED. Aborting before blueprint/CSV steps.')
+  console.error('\nSKU assertions FAILED. Aborting before demo/CSV steps.')
   process.exit(exitCode)
 }
 console.log('\nAll SKU assertions passed.')
@@ -68,15 +62,15 @@ for (const a of colourAssertions) {
 }
 
 if (exitCode !== 0) {
-  console.error('\nColour code assertions FAILED. Aborting before blueprint/CSV steps.')
+  console.error('\nColour code assertions FAILED. Aborting before demo/CSV steps.')
   process.exit(exitCode)
 }
 console.log('\nAll colour code assertions passed.')
 
 // ---------------------------------------------------------------------------
-// 3. Build Cricket Template blueprint for club ETDC
+// 3. Demo ETDC store (all 9 garments, real supplier colours)
 // ---------------------------------------------------------------------------
-section('3. Cricket Template blueprint applied to club ETDC')
+section('3. Demo store built for club ETDC')
 
 const club = seedClubs.find((c) => c.clubCode === 'ETDC')
 if (!club) {
@@ -84,21 +78,12 @@ if (!club) {
   process.exit(1)
 }
 
-const blueprint = seedBlueprints.find((b) => b.name === 'Cricket Template')
-if (!blueprint) {
-  console.error('Seed blueprint "Cricket Template" not found.')
-  process.exit(1)
-}
-
 const garmentsById = new Map(seedGarments.map((g) => [g.id, g]))
-const storeGarments = applyBlueprint('project_demo', blueprint, seedBlueprintGarments, garmentsById)
+const configuredGarments: ConfiguredGarment[] = seedStoreGarments
+  .filter((sg) => sg.projectId === 'project_demo_etdc')
+  .map((sg) => ({ ...sg, garment: garmentsById.get(sg.garmentId)! }))
 
-const configuredGarments: ConfiguredGarment[] = storeGarments.map((sg) => ({
-  ...sg,
-  garment: garmentsById.get(sg.garmentId)!,
-}))
-
-const products = generateProducts(configuredGarments, club)
+const products = generateProducts(configuredGarments, club, seedColourNames)
 
 for (const product of products) {
   console.log(`\n${product.productName} (${product.category})`)

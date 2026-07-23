@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { MOCK_MODE } from '@/lib/config'
-import { applyBlueprint, cloneStoreGarments, generateId } from '@/lib/blueprintEngine'
+import { cloneStoreGarments, generateId } from '@/lib/cloneEngine'
 import { getDb, mutate, subscribe } from '@/lib/dataStore'
+import { getAvailableSizes } from '@/lib/sizeTemplates'
 import { supabase } from '@/lib/supabaseClient'
-import type { Club, ConfiguredGarment, StoreGarment, StoreProject } from '@/lib/types'
-import { useBlueprints } from './useBlueprints'
+import type { Club, ConfiguredGarment, Garment, StoreGarment, StoreProject } from '@/lib/types'
 import { useGarments } from './useGarments'
 
 export interface StoreGarmentPatch {
   customName?: string | null
-  includeKids?: boolean
-  includeAdults?: boolean
+  colours?: string[]
+  selectedSizeCodes?: string[]
 }
 
 function clubsSnapshot() {
@@ -25,9 +25,12 @@ function storeGarmentsSnapshot() {
   return getDb().storeGarments
 }
 
+function defaultSizeCodes(garment: Garment): string[] {
+  return getAvailableSizes(garment.sizeTemplate, garment.allowKids, garment.allowAdults).map((s) => s.code)
+}
+
 export function useStoreProject(projectId: string | undefined) {
   const { garments } = useGarments()
-  const { blueprintGarments } = useBlueprints()
   const garmentsById = useMemo(() => new Map(garments.map((g) => [g.id, g])), [garments])
 
   const mockClubs = useSyncExternalStore(subscribe, clubsSnapshot, clubsSnapshot)
@@ -69,8 +72,8 @@ export function useStoreProject(projectId: string | undefined) {
           projectId: sg.project_id,
           garmentId: sg.garment_id,
           customName: sg.custom_name,
-          includeKids: sg.include_kids,
-          includeAdults: sg.include_adults,
+          colours: sg.colours ?? [],
+          selectedSizeCodes: sg.selected_size_codes ?? [],
           sortOrder: sg.sort_order,
         })),
       )
@@ -116,8 +119,8 @@ export function useStoreProject(projectId: string | undefined) {
             project_id: r.projectId,
             garment_id: r.garmentId,
             custom_name: r.customName,
-            include_kids: r.includeKids,
-            include_adults: r.includeAdults,
+            colours: r.colours,
+            selected_size_codes: r.selectedSizeCodes,
             sort_order: r.sortOrder,
           })),
         )
@@ -127,39 +130,45 @@ export function useStoreProject(projectId: string | undefined) {
     [projectId, refetch],
   )
 
-  const addGarment = useCallback(
-    async (garmentId: string) => {
-      if (!projectId) return
-      const garment = garmentsById.get(garmentId)
-      if (!garment) return
-      const row: StoreGarment = {
-        id: generateId('sg'),
-        projectId,
-        garmentId,
-        customName: null,
-        includeKids: garment.allowKids,
-        includeAdults: garment.allowAdults,
-        sortOrder: storeGarments.length,
-      }
+  const addGarments = useCallback(
+    async (garmentIds: string[]) => {
+      if (!projectId || garmentIds.length === 0) return
+      const startIndex = storeGarments.length
+      const rows: StoreGarment[] = garmentIds
+        .map((garmentId) => garmentsById.get(garmentId))
+        .filter((g): g is Garment => Boolean(g))
+        .map((g, i) => ({
+          id: generateId('sg'),
+          projectId,
+          garmentId: g.id,
+          customName: null,
+          colours: [],
+          selectedSizeCodes: defaultSizeCodes(g),
+          sortOrder: startIndex + i,
+        }))
       if (MOCK_MODE) {
         mutate((db) => {
-          db.storeGarments = [...db.storeGarments, row]
+          db.storeGarments = [...db.storeGarments, ...rows]
         })
         return
       }
-      await supabase!.from('store_garments').insert({
-        id: row.id,
-        project_id: row.projectId,
-        garment_id: row.garmentId,
-        custom_name: row.customName,
-        include_kids: row.includeKids,
-        include_adults: row.includeAdults,
-        sort_order: row.sortOrder,
-      })
+      await supabase!.from('store_garments').insert(
+        rows.map((r) => ({
+          id: r.id,
+          project_id: r.projectId,
+          garment_id: r.garmentId,
+          custom_name: r.customName,
+          colours: r.colours,
+          selected_size_codes: r.selectedSizeCodes,
+          sort_order: r.sortOrder,
+        })),
+      )
       await refetch()
     },
     [projectId, garmentsById, storeGarments.length, refetch],
   )
+
+  const addGarment = useCallback((garmentId: string) => addGarments([garmentId]), [addGarments])
 
   const removeGarment = useCallback(
     async (storeGarmentId: string) => {
@@ -195,8 +204,8 @@ export function useStoreProject(projectId: string | undefined) {
         project_id: clone.projectId,
         garment_id: clone.garmentId,
         custom_name: clone.customName,
-        include_kids: clone.includeKids,
-        include_adults: clone.includeAdults,
+        colours: clone.colours,
+        selected_size_codes: clone.selectedSizeCodes,
         sort_order: clone.sortOrder,
       })
       await refetch()
@@ -218,8 +227,8 @@ export function useStoreProject(projectId: string | undefined) {
         .from('store_garments')
         .update({
           ...(patch.customName !== undefined && { custom_name: patch.customName }),
-          ...(patch.includeKids !== undefined && { include_kids: patch.includeKids }),
-          ...(patch.includeAdults !== undefined && { include_adults: patch.includeAdults }),
+          ...(patch.colours !== undefined && { colours: patch.colours }),
+          ...(patch.selectedSizeCodes !== undefined && { selected_size_codes: patch.selectedSizeCodes }),
         })
         .eq('id', storeGarmentId)
       await refetch()
@@ -248,22 +257,6 @@ export function useStoreProject(projectId: string | undefined) {
     [refetch],
   )
 
-  const applyBlueprintToProject = useCallback(
-    async (blueprintId: string) => {
-      if (!projectId) return
-      const blueprint = { id: blueprintId, name: '', sport: '', createdAt: '' }
-      const rows = applyBlueprint(projectId, blueprint, blueprintGarments, garmentsById)
-      if (MOCK_MODE) {
-        mutate((db) => {
-          db.storeGarments = [...db.storeGarments.filter((sg) => sg.projectId !== projectId), ...rows]
-        })
-        return
-      }
-      await persistStoreGarments(rows)
-    },
-    [projectId, blueprintGarments, garmentsById, persistStoreGarments],
-  )
-
   const cloneFromClubProject = useCallback(
     async (sourceConfiguredGarments: ConfiguredGarment[]) => {
       if (!projectId) return
@@ -285,11 +278,11 @@ export function useStoreProject(projectId: string | undefined) {
     configuredGarments,
     loading: MOCK_MODE ? false : loading,
     addGarment,
+    addGarments,
     removeGarment,
     duplicateGarment,
     updateGarment,
     reorder,
-    applyBlueprintToProject,
     cloneFromClubProject,
   }
 }

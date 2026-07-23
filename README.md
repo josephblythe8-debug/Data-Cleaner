@@ -8,6 +8,15 @@ size variants, and supplier SKUs, you select **garments**, configure a
 The app revolves around garments, not products — products and their SKUs
 are always *generated from* garments, never typed by hand.
 
+Garments are split into two layers, since every club is different:
+
+- **Garment Library** — the catalogue-level facts that never change:
+  Range Code, Style Code, category, and which size template/age brackets
+  the style is cut in. These come from the supplier catalogue.
+- **Store Builder** — colour and exact sizing, chosen per club when a
+  garment is added to that club's store, since two clubs never want the
+  same colourway or size run.
+
 ## Quick start (mock mode — zero setup)
 
 Mock mode is the default. No Supabase project, no auth, no database.
@@ -18,11 +27,11 @@ npm run dev
 ```
 
 Open the printed local URL and walk the whole flow: **Dashboard → Garment
-Library → Blueprints → Store Builder → Preview → CSV download.** The app
-starts pre-loaded with 2 demo clubs, 9 demo garments, and a "Cricket
-Template" blueprint (see `src/lib/mockData.ts`). All data lives in an
-in-memory store for the session — refreshing the page resets it back to
-the seed data.
+Library → Store Builder → Preview → CSV download.** The app starts
+pre-loaded with 2 demo clubs, 9 demo garments, and one fully-configured
+demo store (see `src/lib/mockData.ts`). All data lives in an in-memory
+store for the session — refreshing the page resets it back to the seed
+data.
 
 A "Mock mode" badge in the top nav confirms which mode you're in.
 
@@ -38,9 +47,11 @@ This script:
 
 1. Asserts the six SKU examples from the spec produce the exact expected
    strings (fails loudly, exits non-zero on any mismatch).
-2. Applies the "Cricket Template" blueprint to club `ETDC` and prints every
-   generated parent + variant SKU.
-3. Prints a sample BigCommerce CSV (first ~15 rows).
+2. Asserts the colour code engine builds a colour code (e.g. `MERDXX`)
+   from colours picked off the fixed company colour table.
+3. Builds the demo ETDC store (all 9 garments) and prints every generated
+   parent + variant SKU.
+4. Prints a sample BigCommerce CSV (first ~15 rows).
 
 ## How it's built
 
@@ -49,16 +60,16 @@ The core logic is a set of pure, dependency-free TypeScript modules under
 
 | Module | Responsibility |
 | --- | --- |
-| `sizeTemplates.ts` | Single source of truth for size label → size code (kids/adults/socks/OSFA). |
+| `sizeTemplates.ts` | Single source of truth for size label → size code (kids/adults/socks/OSFA), plus the size-selection/grouping helpers Store Builder uses. |
 | `sku.ts` | Builds SKUs **only** from structured supplier codes: `{RANGE}-{STYLE}-0-{TEAM}-{COLOUR}-{SIZE}`. Never derives a SKU from a display name. |
-| `colourCode.ts` | Builds the COLOUR segment (e.g. `MERDXX`) from up to 3 named colours, each with a fixed 2-letter abbreviation (e.g. Marine → ME), padding unused slots with `XX`. Colours are picked from a library in the Garment form, never typed by hand. |
-| `blueprintEngine.ts` | Turns a blueprint into store-garment rows; clones a club's garment configuration onto a new club (SKUs always regenerate, never copy verbatim). |
-| `productGenerator.ts` | Turns configured garments into parent products + variants. Both the Preview page and the CSV export call this exact function, so they can never drift apart. |
+| `colourCode.ts` | Builds the COLOUR segment (e.g. `MERDXX`) from up to 3 named colours, each with a fixed 2-letter abbreviation (e.g. Marine → ME), padding unused slots with `XX`. Colours are picked from a fixed company table, never typed by hand. |
+| `cloneEngine.ts` | Clones a club's garment configuration (garments, colours, sizes) onto a new club. SKUs are never copied verbatim — colour_code is always derived fresh at generation time, so cloning "regenerates" automatically. |
+| `productGenerator.ts` | Turns configured garments into parent products + variants — kids and adults sizing always become separate products. Both the Preview page and the CSV export call this exact function, so they can never drift apart. |
 | `validation.ts` | Blocking errors (missing club code/range/style/colour, duplicate SKU) vs. non-blocking warnings (a garment with zero sizes selected). |
 | `csvExport.ts` | Renders the BigCommerce import CSV from the same generated products Preview shows. |
 
 `src/lib/dataStore.ts` + `src/hooks/*` are the data layer. Every hook
-(`useClubs`, `useGarments`, `useBlueprints`, `useStoreProjects`,
+(`useClubs`, `useGarments`, `useColourNames`, `useStoreProjects`,
 `useStoreProject`) branches on `MOCK_MODE`: reading/writing an in-memory
 store when mock mode is on, or the real Supabase tables when it's off.
 The UI never talks to either directly — it only calls these hooks, so
@@ -108,18 +119,19 @@ policies if you need multi-tenant isolation later.
 
 ```
 src/
-  lib/                  Pure engines: sku, sizeTemplates, validation,
-                         blueprintEngine, productGenerator, csvExport,
-                         mockData, dataStore, config, supabaseClient
-  hooks/                useClubs, useGarments, useBlueprints,
+  lib/                  Pure engines: sku, colourCode, sizeTemplates,
+                         validation, cloneEngine, productGenerator,
+                         csvExport, mockData, dataStore, config,
+                         supabaseClient
+  hooks/                useClubs, useGarments, useColourNames,
                          useStoreProjects, useStoreProject, useTheme
   components/
     ui/                 shadcn-style primitives (button, card, dialog, ...)
     layout/              Navbar, page layout
-    garments/            Garment add/edit dialog
-    blueprints/           Blueprint create/edit dialog
-    store-builder/        Draggable garment card, add-garment dialog
-  pages/                Dashboard, GarmentLibrary, Blueprints,
+    garments/            Garment add/edit dialog, colour slot picker
+    store-builder/        Garment checklist, draggable configured-garment
+                           card (colour + per-size picker), add-garments dialog
+  pages/                Dashboard, GarmentLibrary,
                          StoreBuilderNew, StoreBuilderConfigure, Preview
 scripts/
   testSku.ts            npm run test:sku entry point
@@ -127,6 +139,21 @@ supabase/
   migrations/0001_init.sql   Schema + RLS + storage bucket
   seed.sql                    Demo data seed
 ```
+
+## Store Builder flow
+
+1. **Create Club** — name, code, sport, supplier. The club code becomes
+   the `{TEAM}` segment of every SKU.
+2. **Garments** — tick which garments this club needs from the library
+   (search + select all/clear), or clone another club's garments, colours
+   and sizes wholesale.
+3. **Configure Store** — for each garment, set a custom product name,
+   pick up to 3 colours, and pick exactly which sizes this club needs
+   (grouped Adults/Kids with quick "All"/"None", then editable
+   size-by-size). Drag to reorder, duplicate, or remove.
+4. **Preview & Export** — see every generated product/SKU exactly as it
+   will be exported, with blocking-error and warning banners, then
+   download the BigCommerce CSV.
 
 ## SKU structure
 

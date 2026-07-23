@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/garments', label: 'Garment Library' },
-  { to: '/blueprints', label: 'Blueprints' },
   { to: '/store-builder', label: 'Store Builder' },
 ]
 

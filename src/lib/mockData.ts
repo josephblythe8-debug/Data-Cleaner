@@ -3,15 +3,8 @@
  * swapping the data client for a real Supabase-backed one is a drop-in
  * change. Also used as the source for `supabase/seed.sql`.
  */
-import type {
-  Blueprint,
-  BlueprintGarment,
-  Club,
-  ColourName,
-  Garment,
-  StoreGarment,
-  StoreProject,
-} from './types'
+import { getAvailableSizes } from './sizeTemplates'
+import type { Club, ColourName, Garment, StoreGarment, StoreProject } from './types'
 
 // The colour library: name -> 2-letter abbreviation used to build the
 // COLOUR segment of a SKU (see src/lib/colourCode.ts). This is the fixed
@@ -61,19 +54,17 @@ export const seedClubs: Club[] = [
   },
 ]
 
-// MERDXX = Marine (ME) + Red (RD) + none (XX)
-const MERDXX_COLOURS = ['Marine', 'Red']
-// MNGOXX = Maroon (MN) + Gold (GO) + none (XX)
-const MNGOXX_COLOURS = ['Maroon', 'Gold']
-
+// The garment library holds only the catalogue-level facts that never
+// change per club: Range Code + Style Code (supplier-assigned), category,
+// and which size template/age brackets the style is cut in. Colour and
+// exact sizing are chosen per club when the garment is added to a store
+// (see seedStoreGarments below) — every club needs different colours.
 export const seedGarments: Garment[] = [
   {
     id: 'garment_club_polo',
     name: 'Club Polo',
     rangeCode: 'LINC',
     styleCode: '061',
-    colourCode: 'MERDXX',
-    colours: MERDXX_COLOURS,
     category: 'Polo',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -85,8 +76,6 @@ export const seedGarments: Garment[] = [
     name: 'Club Hoodie',
     rangeCode: 'LINC',
     styleCode: '112',
-    colourCode: 'MERDXX',
-    colours: MERDXX_COLOURS,
     category: 'Hoodie',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -98,8 +87,6 @@ export const seedGarments: Garment[] = [
     name: 'Training Tee',
     rangeCode: 'TEAM',
     styleCode: '204',
-    colourCode: 'MNGOXX',
-    colours: MNGOXX_COLOURS,
     category: 'Tee',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -111,8 +98,6 @@ export const seedGarments: Garment[] = [
     name: 'Training Shorts',
     rangeCode: 'TEAM',
     styleCode: '210',
-    colourCode: 'MNGOXX',
-    colours: MNGOXX_COLOURS,
     category: 'Shorts',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -124,8 +109,6 @@ export const seedGarments: Garment[] = [
     name: 'Playing Shirt SS',
     rangeCode: 'TEAM',
     styleCode: '327',
-    colourCode: 'MNGOXX',
-    colours: MNGOXX_COLOURS,
     category: 'Playing Shirt',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -137,8 +120,6 @@ export const seedGarments: Garment[] = [
     name: 'Playing Shirt LS',
     rangeCode: 'TEAM',
     styleCode: '328',
-    colourCode: 'MNGOXX',
-    colours: MNGOXX_COLOURS,
     category: 'Playing Shirt',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -150,8 +131,6 @@ export const seedGarments: Garment[] = [
     name: 'Playing Pants',
     rangeCode: 'TEAM',
     styleCode: '330',
-    colourCode: 'MNGOXX',
-    colours: MNGOXX_COLOURS,
     category: 'Pants',
     sizeTemplate: 'adults',
     allowKids: true,
@@ -163,8 +142,6 @@ export const seedGarments: Garment[] = [
     name: 'Club Cap',
     rangeCode: 'LINC',
     styleCode: '400',
-    colourCode: 'MERDXX',
-    colours: MERDXX_COLOURS,
     category: 'Headwear',
     sizeTemplate: 'osfa',
     allowKids: false,
@@ -176,8 +153,6 @@ export const seedGarments: Garment[] = [
     name: 'Club Socks',
     rangeCode: 'LINC',
     styleCode: '410',
-    colourCode: 'MERDXX',
-    colours: MERDXX_COLOURS,
     category: 'Socks',
     sizeTemplate: 'socks',
     allowKids: true,
@@ -186,22 +161,53 @@ export const seedGarments: Garment[] = [
   },
 ]
 
-export const seedBlueprints: Blueprint[] = [
+export const seedStoreProjects: StoreProject[] = [
   {
-    id: 'blueprint_cricket_template',
-    name: 'Cricket Template',
-    sport: 'Cricket',
-    createdAt: '2026-01-10T09:00:00.000Z',
+    id: 'project_demo_etdc',
+    clubId: 'club_etdc',
+    projectName: 'Eastern Districts Cricket Club Store',
+    createdAt: '2026-01-20T09:00:00.000Z',
   },
 ]
 
-export const seedBlueprintGarments: BlueprintGarment[] = seedGarments.map((garment, index) => ({
-  id: `bg_${index + 1}`,
-  blueprintId: 'blueprint_cricket_template',
-  garmentId: garment.id,
-  sortOrder: index,
-}))
+// MERDXX = Marine (ME) + Red (RD) + none (XX)
+const MERDXX_COLOURS = ['Marine', 'Red']
+// MNGOXX = Maroon (MN) + Gold (GO) + none (XX)
+const MNGOXX_COLOURS = ['Maroon', 'Gold']
 
-export const seedStoreProjects: StoreProject[] = []
+function allSizeCodes(garment: Garment): string[] {
+  return getAvailableSizes(garment.sizeTemplate, garment.allowKids, garment.allowAdults).map((s) => s.code)
+}
 
-export const seedStoreGarments: StoreGarment[] = []
+const garmentsById = new Map(seedGarments.map((g) => [g.id, g]))
+function garment(id: string): Garment {
+  const g = garmentsById.get(id)
+  if (!g) throw new Error(`Unknown seed garment id: ${id}`)
+  return g
+}
+
+// A fully-configured demo store, so mock mode has something to look at
+// (Dashboard, Preview, CSV export) without requiring a click-through first.
+export const seedStoreGarments: StoreGarment[] = [
+  'garment_club_polo',
+  'garment_club_hoodie',
+  'garment_training_tee',
+  'garment_training_shorts',
+  'garment_playing_shirt_ss',
+  'garment_playing_shirt_ls',
+  'garment_playing_pants',
+  'garment_club_cap',
+  'garment_club_socks',
+].map((garmentId, index) => {
+  const g = garment(garmentId)
+  const colours = g.rangeCode === 'TEAM' ? MNGOXX_COLOURS : MERDXX_COLOURS
+  return {
+    id: `sg_demo_${index + 1}`,
+    projectId: 'project_demo_etdc',
+    garmentId,
+    customName: null,
+    colours,
+    selectedSizeCodes: allSizeCodes(g),
+    sortOrder: index,
+  }
+})

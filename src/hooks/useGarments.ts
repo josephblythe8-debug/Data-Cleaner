@@ -9,9 +9,6 @@ export interface GarmentInput {
   name: string
   rangeCode: string
   styleCode: string
-  /** Derived from `colours` via buildColourCode() — never typed by hand. */
-  colourCode: string
-  colours: string[]
   category: string
   sizeTemplate: SizeTemplateKey
   allowKids: boolean
@@ -27,8 +24,6 @@ function fromRow(row: {
   name: string
   range_code: string
   style_code: string
-  colour_code: string
-  colours: string[] | null
   category: string
   size_template: SizeTemplateKey
   allow_kids: boolean
@@ -40,8 +35,6 @@ function fromRow(row: {
     name: row.name,
     rangeCode: row.range_code,
     styleCode: row.style_code,
-    colourCode: row.colour_code,
-    colours: row.colours ?? [],
     category: row.category,
     sizeTemplate: row.size_template,
     allowKids: row.allow_kids,
@@ -82,8 +75,6 @@ export function useGarments() {
           name: input.name,
           range_code: input.rangeCode,
           style_code: input.styleCode,
-          colour_code: input.colourCode,
-          colours: input.colours,
           category: input.category,
           size_template: input.sizeTemplate,
           allow_kids: input.allowKids,
@@ -114,8 +105,6 @@ export function useGarments() {
           ...(patch.name !== undefined && { name: patch.name }),
           ...(patch.rangeCode !== undefined && { range_code: patch.rangeCode }),
           ...(patch.styleCode !== undefined && { style_code: patch.styleCode }),
-          ...(patch.colourCode !== undefined && { colour_code: patch.colourCode }),
-          ...(patch.colours !== undefined && { colours: patch.colours }),
           ...(patch.category !== undefined && { category: patch.category }),
           ...(patch.sizeTemplate !== undefined && { size_template: patch.sizeTemplate }),
           ...(patch.allowKids !== undefined && { allow_kids: patch.allowKids }),

@@ -53,7 +53,39 @@ export function getSizeDefs(template: SizeTemplateKey): SizeDef[] {
   return SIZE_TEMPLATES[template]
 }
 
-/** A garment's size list for one age group, e.g. all its adult sizes. */
+/**
+ * The full set of sizes a garment CAN offer, given its size template and
+ * which age brackets it's available in at all (allowKids/allowAdults are a
+ * garment-level capability — e.g. a cap is never offered in kids sizing).
+ * This is the checklist a coordinator picks specific sizes from per club;
+ * it is not itself a selection.
+ */
+export function getAvailableSizes(
+  template: SizeTemplateKey,
+  allowKids: boolean,
+  allowAdults: boolean,
+): SizeDef[] {
+  if (template === 'socks' || template === 'osfa') {
+    return getSizeDefs(template)
+  }
+  if (template === 'kids') {
+    return allowKids ? getSizeDefs('kids') : []
+  }
+  // template === 'adults'
+  return [
+    ...(allowAdults ? getSizeDefs('adults') : []),
+    ...(allowKids ? getSizeDefs('kids') : []),
+  ]
+}
+
+/** Which age group a size code belongs to, by looking it up in the tables above. */
+export function ageGroupForSizeCode(code: string): 'adults' | 'kids' | null {
+  if (SIZE_TEMPLATES.adults.some((s) => s.code === code)) return 'adults'
+  if (SIZE_TEMPLATES.kids.some((s) => s.code === code)) return 'kids'
+  return null
+}
+
+/** A garment's size list for one age group, e.g. all its selected adult sizes. */
 export interface SizeGroup {
   /**
    * "all" means the sizes aren't split by age at all (socks, headwear) —
@@ -66,34 +98,24 @@ export interface SizeGroup {
 }
 
 /**
- * Resolves the size group(s) a garment offers given whether kids/adults
- * are enabled for that garment in the current store project. Returns one
- * entry per age group that should become its own product.
- *
- * - "socks" and "osfa" are flat, self-contained runs (a sock size run
- *   already spans kid-to-adult feet, and OSFA is one size for everyone),
- *   so they ignore the kids/adults toggles and always yield a single "all"
- *   group.
- * - "adults" is the general apparel template: most apparel (polos, tees,
- *   shorts, etc.) is cut in both a kids run and an adults run from the
- *   same garment, so each enabled toggle yields its own group/product.
- * - "kids" is a kids-only garment; the adults toggle has no effect since
- *   there is no adult size list attached to it.
+ * Groups a club's selected size codes into the product(s) they become.
+ * Codes are classified purely by which table they belong to — adult-table
+ * codes become an "Adults" product, kids-table codes a "Kids" product, and
+ * anything else (socks, OSFA) collapses into a single "all" product, since
+ * those aren't split by age.
  */
-export function resolveGarmentSizeGroups(
-  template: SizeTemplateKey,
-  includeKids: boolean,
-  includeAdults: boolean,
-): SizeGroup[] {
-  if (template === 'socks' || template === 'osfa') {
-    return [{ ageGroup: 'all', sizes: getSizeDefs(template) }]
-  }
-  if (template === 'kids') {
-    return includeKids ? [{ ageGroup: 'kids', sizes: getSizeDefs('kids') }] : []
-  }
-  // template === 'adults'
+export function resolveGarmentSizeGroups(selectedSizeCodes: string[]): SizeGroup[] {
+  const selected = new Set(selectedSizeCodes)
+  // Filter each canonical list (rather than iterating selectedSizeCodes) so
+  // sizes always display in the standard S/M/L/... order regardless of the
+  // order they were ticked in.
+  const adults = SIZE_TEMPLATES.adults.filter((s) => selected.has(s.code))
+  const kids = SIZE_TEMPLATES.kids.filter((s) => selected.has(s.code))
+  const other = [...SIZE_TEMPLATES.socks, ...SIZE_TEMPLATES.osfa].filter((s) => selected.has(s.code))
+
   const groups: SizeGroup[] = []
-  if (includeAdults) groups.push({ ageGroup: 'adults', sizes: getSizeDefs('adults') })
-  if (includeKids) groups.push({ ageGroup: 'kids', sizes: getSizeDefs('kids') })
+  if (adults.length > 0) groups.push({ ageGroup: 'adults', sizes: adults })
+  if (kids.length > 0) groups.push({ ageGroup: 'kids', sizes: kids })
+  if (other.length > 0) groups.push({ ageGroup: 'all', sizes: other })
   return groups
 }

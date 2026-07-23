@@ -6,30 +6,36 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { GarmentChecklist } from '@/components/store-builder/GarmentChecklist'
 import { useClubs, type ClubInput } from '@/hooks/useClubs'
 import { useStoreProjects } from '@/hooks/useStoreProjects'
-import { useBlueprints } from '@/hooks/useBlueprints'
 
 const EMPTY_CLUB: ClubInput = { clubName: '', clubCode: '', sport: '', supplier: '' }
 
-type Source = 'blueprint' | 'blank' | 'clone'
+type Source = 'select' | 'clone'
 
 export function StoreBuilderNew() {
   const navigate = useNavigate()
   const { addClub } = useClubs()
   const { createProject, projects } = useStoreProjects()
-  const { blueprints } = useBlueprints()
 
   const [club, setClub] = useState<ClubInput>(EMPTY_CLUB)
-  const [source, setSource] = useState<Source>('blueprint')
-  const [blueprintId, setBlueprintId] = useState<string>('')
+  const [source, setSource] = useState<Source>('select')
+  const [selectedGarmentIds, setSelectedGarmentIds] = useState<Set<string>>(new Set())
   const [cloneProjectId, setCloneProjectId] = useState<string>('')
   const [creating, setCreating] = useState(false)
 
+  function toggleGarment(garmentId: string) {
+    setSelectedGarmentIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(garmentId)) next.delete(garmentId)
+      else next.add(garmentId)
+      return next
+    })
+  }
+
   const isClubValid = club.clubName.trim() && club.clubCode.trim() && club.sport.trim() && club.supplier.trim()
-  const canSubmit =
-    isClubValid &&
-    (source === 'blank' || (source === 'blueprint' && blueprintId) || (source === 'clone' && cloneProjectId))
+  const canSubmit = isClubValid && (source === 'select' || (source === 'clone' && cloneProjectId))
 
   async function handleCreate() {
     if (!canSubmit) return
@@ -38,7 +44,9 @@ export function StoreBuilderNew() {
       const newClub = await addClub({ ...club, clubCode: club.clubCode.toUpperCase() })
       const project = await createProject(newClub.id, `${newClub.clubName} Store`)
       const params = new URLSearchParams()
-      if (source === 'blueprint') params.set('sourceBlueprint', blueprintId)
+      if (source === 'select' && selectedGarmentIds.size > 0) {
+        params.set('sourceGarments', [...selectedGarmentIds].join(','))
+      }
       if (source === 'clone') params.set('sourceClone', cloneProjectId)
       const qs = params.toString()
       navigate(`/store-builder/${project.id}${qs ? `?${qs}` : ''}`)
@@ -101,34 +109,19 @@ export function StoreBuilderNew() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Starting Point</CardTitle>
-          <CardDescription>Step 2 of 3 — choose how to populate the store</CardDescription>
+          <CardTitle>Garments</CardTitle>
+          <CardDescription>Step 2 of 3 — which garments does this club need?</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={source} onValueChange={(v) => setSource(v as Source)}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="blueprint">Blueprint</TabsTrigger>
-              <TabsTrigger value="blank">Start Blank</TabsTrigger>
-              <TabsTrigger value="clone">Clone Club</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="select">Select Garments</TabsTrigger>
+              <TabsTrigger value="clone">Clone Existing Club</TabsTrigger>
             </TabsList>
-            <TabsContent value="blueprint" className="flex flex-col gap-2">
-              <Label>Select Blueprint</Label>
-              <Select value={blueprintId} onValueChange={setBlueprintId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a blueprint..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {blueprints.map((bp) => (
-                    <SelectItem key={bp.id} value={bp.id}>
-                      {bp.name} ({bp.sport})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </TabsContent>
-            <TabsContent value="blank">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Start with an empty store and add garments manually in the next step.
+            <TabsContent value="select">
+              <GarmentChecklist selected={selectedGarmentIds} onToggle={toggleGarment} />
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Colours and sizes are set per club in the next step — leave everything unticked to start blank.
               </p>
             </TabsContent>
             <TabsContent value="clone" className="flex flex-col gap-2">
@@ -146,7 +139,8 @@ export function StoreBuilderNew() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                SKUs regenerate automatically against the new club code — nothing is copied verbatim.
+                Copies garments, colours and sizes from that store. SKUs regenerate automatically against
+                the new club code — nothing is copied verbatim.
               </p>
             </TabsContent>
           </Tabs>

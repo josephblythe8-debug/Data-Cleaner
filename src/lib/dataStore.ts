@@ -5,30 +5,18 @@
  * Supabase, behind the same hook interface (useGarments, useClubs, etc.).
  */
 import {
-  seedBlueprintGarments,
-  seedBlueprints,
   seedClubs,
   seedColourNames,
   seedGarments,
   seedStoreGarments,
   seedStoreProjects,
 } from './mockData'
-import type {
-  Blueprint,
-  BlueprintGarment,
-  Club,
-  ColourName,
-  Garment,
-  StoreGarment,
-  StoreProject,
-} from './types'
+import type { Club, ColourName, Garment, StoreGarment, StoreProject } from './types'
 
 interface Db {
   clubs: Club[]
   garments: Garment[]
   colourNames: ColourName[]
-  blueprints: Blueprint[]
-  blueprintGarments: BlueprintGarment[]
   storeProjects: StoreProject[]
   storeGarments: StoreGarment[]
 }
@@ -38,8 +26,6 @@ function cloneSeed(): Db {
     clubs: structuredClone(seedClubs),
     garments: structuredClone(seedGarments),
     colourNames: structuredClone(seedColourNames),
-    blueprints: structuredClone(seedBlueprints),
-    blueprintGarments: structuredClone(seedBlueprintGarments),
     storeProjects: structuredClone(seedStoreProjects),
     storeGarments: structuredClone(seedStoreGarments),
   }

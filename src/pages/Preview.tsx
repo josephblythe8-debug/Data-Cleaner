@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useStoreProject } from '@/hooks/useStoreProject'
+import { useColourNames } from '@/hooks/useColourNames'
 import { generateProducts } from '@/lib/productGenerator'
 import { validateStoreProject } from '@/lib/validation'
 import { renderCsv } from '@/lib/csvExport'
@@ -12,14 +13,16 @@ import { renderCsv } from '@/lib/csvExport'
 export function Preview() {
   const { projectId } = useParams<{ projectId: string }>()
   const { project, club, configuredGarments } = useStoreProject(projectId)
+  const { colourNames } = useColourNames()
 
   const products = useMemo(
     () =>
-      generateProducts(configuredGarments, {
-        clubCode: club?.clubCode ?? '',
-        clubName: club?.clubName ?? '',
-      }),
-    [configuredGarments, club?.clubCode, club?.clubName],
+      generateProducts(
+        configuredGarments,
+        { clubCode: club?.clubCode ?? '', clubName: club?.clubName ?? '' },
+        colourNames,
+      ),
+    [configuredGarments, club?.clubCode, club?.clubName, colourNames],
   )
 
   const validation = useMemo(

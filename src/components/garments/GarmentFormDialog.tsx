@@ -12,29 +12,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ColourSlotsInput } from '@/components/garments/ColourSlotsInput'
-import { useColourNames } from '@/hooks/useColourNames'
-import { buildColourCode } from '@/lib/colourCode'
 import { SIZE_TEMPLATE_LABELS, type SizeTemplateKey } from '@/lib/sizeTemplates'
 import type { GarmentInput } from '@/hooks/useGarments'
 import type { Garment } from '@/lib/types'
 
-interface GarmentFormState {
-  name: string
-  rangeCode: string
-  styleCode: string
-  colours: string[]
-  category: string
-  sizeTemplate: SizeTemplateKey
-  allowKids: boolean
-  allowAdults: boolean
-}
-
-const EMPTY: GarmentFormState = {
+const EMPTY: GarmentInput = {
   name: '',
   rangeCode: '',
   styleCode: '',
-  colours: [],
   category: '',
   sizeTemplate: 'adults',
   allowKids: true,
@@ -49,8 +34,7 @@ interface GarmentFormDialogProps {
 }
 
 export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: GarmentFormDialogProps) {
-  const { colourNames } = useColourNames()
-  const [form, setForm] = useState<GarmentFormState>(EMPTY)
+  const [form, setForm] = useState<GarmentInput>(EMPTY)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -61,7 +45,6 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
               name: garment.name,
               rangeCode: garment.rangeCode,
               styleCode: garment.styleCode,
-              colours: garment.colours,
               category: garment.category,
               sizeTemplate: garment.sizeTemplate,
               allowKids: garment.allowKids,
@@ -72,17 +55,14 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
     }
   }, [open, garment])
 
-  const isValid =
-    form.name.trim() && form.rangeCode.trim() && form.styleCode.trim() && form.colours.length > 0 && form.category.trim()
+  const isValid = form.name.trim() && form.rangeCode.trim() && form.styleCode.trim() && form.category.trim()
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!isValid) return
     setSaving(true)
     try {
-      const byName = new Map(colourNames.map((c) => [c.name, c]))
-      const colourCode = buildColourCode(form.colours.map((name) => byName.get(name)?.abbreviation ?? ''))
-      await onSubmit({ ...form, colourCode })
+      await onSubmit(form)
       onOpenChange(false)
     } finally {
       setSaving(false)
@@ -95,7 +75,8 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
         <DialogHeader>
           <DialogTitle>{garment ? 'Edit Garment' : 'Add Garment'}</DialogTitle>
           <DialogDescription>
-            Supplier codes drive SKU generation — get these right.
+            Range and Style codes are fixed by the supplier catalogue. Colour and exact sizing are
+            chosen per club in Store Builder, since every club is different.
           </DialogDescription>
         </DialogHeader>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -131,14 +112,6 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
                 required
               />
             </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label>Colours (up to 3)</Label>
-            <ColourSlotsInput
-              value={form.colours}
-              onChange={(colours) => setForm({ ...form, colours })}
-            />
           </div>
 
           <div className="flex flex-col gap-1.5">

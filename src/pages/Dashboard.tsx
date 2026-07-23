@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, LayoutTemplate, Plus, Shirt, Store } from 'lucide-react'
+import { ArrowRight, Plus, Shield, Shirt, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useGarments } from '@/hooks/useGarments'
-import { useBlueprints } from '@/hooks/useBlueprints'
 import { useStoreProjects } from '@/hooks/useStoreProjects'
 import { useClubs } from '@/hooks/useClubs'
 
@@ -26,7 +25,6 @@ function Kpi({ label, value, icon: Icon }: { label: string; value: number; icon:
 
 export function Dashboard() {
   const { garments } = useGarments()
-  const { blueprints } = useBlueprints()
   const { projects } = useStoreProjects()
   const { clubs } = useClubs()
 
@@ -50,7 +48,7 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Kpi label="Total Garments" value={garments.length} icon={Shirt} />
-        <Kpi label="Total Blueprints" value={blueprints.length} icon={LayoutTemplate} />
+        <Kpi label="Total Clubs" value={clubs.length} icon={Shield} />
         <Kpi label="Total Stores Created" value={projects.length} icon={Store} />
       </div>
 
@@ -90,25 +88,23 @@ export function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Saved Blueprints</CardTitle>
-            <Link to="/blueprints" className="text-sm text-brand-600 hover:underline">
-              Manage <ArrowRight className="inline h-3 w-3" />
-            </Link>
+          <CardHeader>
+            <CardTitle>Clubs</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            {blueprints.length === 0 && (
-              <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-                No blueprints yet.
-              </p>
+            {clubs.length === 0 && (
+              <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">No clubs yet.</p>
             )}
-            {blueprints.slice(0, 6).map((bp) => (
+            {clubs.slice(0, 6).map((club) => (
               <div
-                key={bp.id}
+                key={club.id}
                 className="flex items-center justify-between rounded-lg border border-slate-200 p-3 dark:border-slate-800"
               >
-                <p className="font-medium">{bp.name}</p>
-                <Badge variant="secondary">{bp.sport}</Badge>
+                <div>
+                  <p className="font-medium">{club.clubName}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{club.supplier}</p>
+                </div>
+                <Badge variant="secondary">{club.clubCode}</Badge>
               </div>
             ))}
           </CardContent>
@@ -128,7 +124,7 @@ export function Dashboard() {
               <div key={g.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
                 <p className="truncate text-sm font-medium">{g.name}</p>
                 <p className="mt-1 font-mono text-xs text-slate-500 dark:text-slate-400">
-                  {g.rangeCode}-{g.styleCode}-{g.colourCode}
+                  {g.rangeCode}-{g.styleCode}
                 </p>
               </div>
             ))}

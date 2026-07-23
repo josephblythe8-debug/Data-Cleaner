@@ -26,26 +26,25 @@ export function StoreBuilderConfigure() {
     project,
     club,
     configuredGarments,
-    addGarment,
+    addGarments,
     removeGarment,
     duplicateGarment,
     updateGarment,
     reorder,
-    applyBlueprintToProject,
     cloneFromClubProject,
   } = useStoreProject(projectId)
 
-  const sourceBlueprint = searchParams.get('sourceBlueprint')
+  const sourceGarments = searchParams.get('sourceGarments')
   const sourceClone = searchParams.get('sourceClone')
   const cloneSource = useStoreProject(sourceClone ?? undefined)
   const appliedRef = useRef(false)
 
   useEffect(() => {
     if (appliedRef.current) return
-    if (sourceBlueprint) {
+    if (sourceGarments) {
       appliedRef.current = true
-      void applyBlueprintToProject(sourceBlueprint).then(() => {
-        searchParams.delete('sourceBlueprint')
+      void addGarments(sourceGarments.split(',')).then(() => {
+        searchParams.delete('sourceGarments')
         setSearchParams(searchParams, { replace: true })
       })
     } else if (sourceClone && cloneSource.configuredGarments.length > 0) {
@@ -56,7 +55,7 @@ export function StoreBuilderConfigure() {
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceBlueprint, sourceClone, cloneSource.configuredGarments.length])
+  }, [sourceGarments, sourceClone, cloneSource.configuredGarments.length])
 
   const [search, setSearch] = useState('')
   const [addOpen, setAddOpen] = useState(false)
@@ -67,6 +66,11 @@ export function StoreBuilderConfigure() {
       q ? [cg.garment.name, cg.customName ?? ''].some((v) => v.toLowerCase().includes(q)) : true,
     )
   }, [configuredGarments, search])
+
+  const existingGarmentIds = useMemo(
+    () => new Set(configuredGarments.map((cg) => cg.garmentId)),
+    [configuredGarments],
+  )
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
@@ -96,7 +100,7 @@ export function StoreBuilderConfigure() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setAddOpen(true)}>
-            <Plus /> Add Garment
+            <Plus /> Add Garments
           </Button>
           <Button onClick={() => navigate(`/store-builder/${projectId}/preview`)}>
             Preview & Export <ArrowRight />
@@ -117,10 +121,10 @@ export function StoreBuilderConfigure() {
       {configuredGarments.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            No garments yet. Add one from the library to get started.
+            No garments yet. Add some from the library to get started.
           </p>
           <Button onClick={() => setAddOpen(true)}>
-            <Plus /> Add Garment
+            <Plus /> Add Garments
           </Button>
         </div>
       ) : (
@@ -153,9 +157,9 @@ export function StoreBuilderConfigure() {
       <AddGarmentDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        onAdd={(garmentId) => {
-          void addGarment(garmentId)
-          setAddOpen(false)
+        existingGarmentIds={existingGarmentIds}
+        onAdd={(garmentIds) => {
+          void addGarments(garmentIds)
         }}
       />
     </div>

@@ -13,41 +13,26 @@ export interface Club {
 export interface ColourName {
   id: string
   name: string
-  /** Exactly 2 letters, uppercase — the segment used to build colourCode. */
+  /** Exactly 2 letters, uppercase — the segment used to build a colour code. */
   abbreviation: string
 }
 
+/**
+ * A garment's catalogue identity — Range Code + Style Code are fixed,
+ * supplier-assigned facts about the product itself, the same for every
+ * club. Colour and sizing vary per club, so they live on StoreGarment
+ * instead, chosen when a garment is added to a specific club's store.
+ */
 export interface Garment {
   id: string
   name: string
   rangeCode: string
   styleCode: string
-  /**
-   * The COLOUR segment of the SKU (e.g. "MERDXX"), always derived from
-   * `colours` via buildColourCode() — never typed by hand.
-   */
-  colourCode: string
-  /** Up to 3 colour names, in order (main / secondary / trim), e.g. ["Marine", "Red"]. */
-  colours: string[]
   category: string
   sizeTemplate: SizeTemplateKey
   allowKids: boolean
   allowAdults: boolean
   active: boolean
-}
-
-export interface Blueprint {
-  id: string
-  name: string
-  sport: string
-  createdAt: string
-}
-
-export interface BlueprintGarment {
-  id: string
-  blueprintId: string
-  garmentId: string
-  sortOrder: number
 }
 
 export interface StoreProject {
@@ -62,8 +47,10 @@ export interface StoreGarment {
   projectId: string
   garmentId: string
   customName: string | null
-  includeKids: boolean
-  includeAdults: boolean
+  /** Up to 3 colour names, in order (main / secondary / trim), e.g. ["Marine", "Red"]. */
+  colours: string[]
+  /** Exact size codes this club needs, e.g. ["S", "M", "L"] — never a blanket toggle. */
+  selectedSizeCodes: string[]
   sortOrder: number
 }
 

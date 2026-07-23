@@ -4,8 +4,9 @@ import { Copy, GripVertical, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
+import { ColourSlotsInput } from '@/components/garments/ColourSlotsInput'
+import { ageGroupForSizeCode, getAvailableSizes, type SizeDef } from '@/lib/sizeTemplates'
 import type { ConfiguredGarment } from '@/lib/types'
 import type { StoreGarmentPatch } from '@/hooks/useStoreProject'
 
@@ -14,6 +15,61 @@ interface ConfiguredGarmentCardProps {
   onUpdate: (patch: StoreGarmentPatch) => void
   onDuplicate: () => void
   onRemove: () => void
+}
+
+function SizeGroupPicker({
+  title,
+  sizes,
+  selected,
+  onToggle,
+  onSelectAll,
+  onClear,
+}: {
+  title: string | null
+  sizes: SizeDef[]
+  selected: Set<string>
+  onToggle: (code: string) => void
+  onSelectAll: () => void
+  onClear: () => void
+}) {
+  if (sizes.length === 0) return null
+  return (
+    <div className="flex flex-col gap-1.5">
+      {title && (
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">{title}</Label>
+          <div className="flex gap-2">
+            <button type="button" onClick={onSelectAll} className="text-xs text-brand-600 hover:underline">
+              All
+            </button>
+            <button type="button" onClick={onClear} className="text-xs text-slate-400 hover:underline">
+              None
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-1.5">
+        {sizes.map((size) => {
+          const isChecked = selected.has(size.code)
+          return (
+            <button
+              key={size.code}
+              type="button"
+              onClick={() => onToggle(size.code)}
+              title={size.label}
+              className={`rounded-md border px-2 py-1 font-mono text-xs transition-colors ${
+                isChecked
+                  ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
+                  : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              {size.code}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export function ConfiguredGarmentCard({
@@ -28,6 +84,28 @@ export function ConfiguredGarmentCard({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  }
+
+  const availableSizes = getAvailableSizes(cg.garment.sizeTemplate, cg.garment.allowKids, cg.garment.allowAdults)
+  const adultSizes = availableSizes.filter((s) => ageGroupForSizeCode(s.code) === 'adults')
+  const kidsSizes = availableSizes.filter((s) => ageGroupForSizeCode(s.code) === 'kids')
+  const flatSizes = availableSizes.filter((s) => ageGroupForSizeCode(s.code) === null)
+  const selected = new Set(cg.selectedSizeCodes)
+
+  function toggleSize(code: string) {
+    const next = new Set(selected)
+    if (next.has(code)) next.delete(code)
+    else next.add(code)
+    onUpdate({ selectedSizeCodes: [...next] })
+  }
+
+  function selectGroup(codes: string[]) {
+    onUpdate({ selectedSizeCodes: [...new Set([...selected, ...codes])] })
+  }
+
+  function clearGroup(codes: string[]) {
+    const toRemove = new Set(codes)
+    onUpdate({ selectedSizeCodes: cg.selectedSizeCodes.filter((c) => !toRemove.has(c)) })
   }
 
   return (
@@ -46,36 +124,50 @@ export function ConfiguredGarmentCard({
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-semibold">{cg.garment.name}</p>
             <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-              {cg.garment.rangeCode}-{cg.garment.styleCode}-{cg.garment.colourCode}
+              {cg.garment.rangeCode}-{cg.garment.styleCode}
             </span>
           </div>
 
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="mt-3 flex flex-col gap-1.5">
+            <Label className="text-xs">Custom Product Name</Label>
+            <Input
+              placeholder={cg.garment.name}
+              value={cg.customName ?? ''}
+              onChange={(e) => onUpdate({ customName: e.target.value || null })}
+            />
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs">Custom Product Name</Label>
-              <Input
-                placeholder={cg.garment.name}
-                value={cg.customName ?? ''}
-                onChange={(e) => onUpdate({ customName: e.target.value || null })}
-              />
+              <Label className="text-xs">Colours (up to 3)</Label>
+              <ColourSlotsInput value={cg.colours} onChange={(colours) => onUpdate({ colours })} />
             </div>
-            <div className="flex items-center gap-6 pt-1 sm:pt-6">
-              <label className="flex items-center gap-2 text-sm">
-                <Switch
-                  checked={cg.includeKids}
-                  onCheckedChange={(v) => onUpdate({ includeKids: v })}
-                  disabled={!cg.garment.allowKids}
-                />
-                Include Kids
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Switch
-                  checked={cg.includeAdults}
-                  onCheckedChange={(v) => onUpdate({ includeAdults: v })}
-                  disabled={!cg.garment.allowAdults}
-                />
-                Include Adults
-              </label>
+
+            <div className="flex flex-col gap-3">
+              <SizeGroupPicker
+                title="Adults"
+                sizes={adultSizes}
+                selected={selected}
+                onToggle={toggleSize}
+                onSelectAll={() => selectGroup(adultSizes.map((s) => s.code))}
+                onClear={() => clearGroup(adultSizes.map((s) => s.code))}
+              />
+              <SizeGroupPicker
+                title="Kids"
+                sizes={kidsSizes}
+                selected={selected}
+                onToggle={toggleSize}
+                onSelectAll={() => selectGroup(kidsSizes.map((s) => s.code))}
+                onClear={() => clearGroup(kidsSizes.map((s) => s.code))}
+              />
+              <SizeGroupPicker
+                title={flatSizes.length > 0 && (adultSizes.length > 0 || kidsSizes.length > 0) ? 'Sizes' : null}
+                sizes={flatSizes}
+                selected={selected}
+                onToggle={toggleSize}
+                onSelectAll={() => selectGroup(flatSizes.map((s) => s.code))}
+                onClear={() => clearGroup(flatSizes.map((s) => s.code))}
+              />
             </div>
           </div>
         </div>

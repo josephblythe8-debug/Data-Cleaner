@@ -46,10 +46,10 @@ export function validateStoreProject(
         storeGarmentId: cg.id,
       })
     }
-    if (!cg.garment.colourCode.trim()) {
+    if (cg.colours.length === 0) {
       errors.push({
         code: 'MISSING_COLOUR',
-        message: `"${label}" is missing a Colour code.`,
+        message: `"${label}" has no colour selected.`,
         storeGarmentId: cg.id,
       })
     }

@@ -21,11 +21,7 @@ export function GarmentLibrary() {
     return garments
       .filter((g) => (showArchived ? true : g.active))
       .filter((g) =>
-        q
-          ? [g.name, g.rangeCode, g.styleCode, g.colourCode, g.category, ...g.colours].some((v) =>
-              v.toLowerCase().includes(q),
-            )
-          : true,
+        q ? [g.name, g.rangeCode, g.styleCode, g.category].some((v) => v.toLowerCase().includes(q)) : true,
       )
   }, [garments, search, showArchived])
 
@@ -111,16 +107,9 @@ export function GarmentLibrary() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1 rounded-md bg-slate-100 px-2 py-1.5 dark:bg-slate-800">
-                <p className="font-mono text-xs text-slate-600 dark:text-slate-300">
-                  {garment.rangeCode}-{garment.styleCode}-0-TEAM-{garment.colourCode}-ALL
-                </p>
-                {garment.colours.length > 0 && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {garment.colours.join(' / ')}
-                  </p>
-                )}
-              </div>
+              <p className="rounded-md bg-slate-100 px-2 py-1.5 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {garment.rangeCode}-{garment.styleCode}
+              </p>
 
               <div className="flex flex-wrap gap-1.5">
                 <Badge variant="outline">{SIZE_TEMPLATE_LABELS[garment.sizeTemplate]}</Badge>
