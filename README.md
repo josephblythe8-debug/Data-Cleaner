@@ -51,6 +51,7 @@ The core logic is a set of pure, dependency-free TypeScript modules under
 | --- | --- |
 | `sizeTemplates.ts` | Single source of truth for size label → size code (kids/adults/socks/OSFA). |
 | `sku.ts` | Builds SKUs **only** from structured supplier codes: `{RANGE}-{STYLE}-0-{TEAM}-{COLOUR}-{SIZE}`. Never derives a SKU from a display name. |
+| `colourCode.ts` | Builds the COLOUR segment (e.g. `MERDXX`) from up to 3 named colours, each with a fixed 2-letter abbreviation (e.g. Marine → ME), padding unused slots with `XX`. Colours are picked from a library in the Garment form, never typed by hand. |
 | `blueprintEngine.ts` | Turns a blueprint into store-garment rows; clones a club's garment configuration onto a new club (SKUs always regenerate, never copy verbatim). |
 | `productGenerator.ts` | Turns configured garments into parent products + variants. Both the Preview page and the CSV export call this exact function, so they can never drift apart. |
 | `validation.ts` | Blocking errors (missing club code/range/style/colour, duplicate SKU) vs. non-blocking warnings (a garment with zero sizes selected). |

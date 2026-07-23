@@ -9,23 +9,31 @@ export interface Club {
   createdAt: string
 }
 
+/** A named colour from the colour library — e.g. Marine, abbreviated "ME". */
+export interface ColourName {
+  id: string
+  name: string
+  /** Exactly 2 letters, uppercase — the segment used to build colourCode. */
+  abbreviation: string
+}
+
 export interface Garment {
   id: string
   name: string
   rangeCode: string
   styleCode: string
+  /**
+   * The COLOUR segment of the SKU (e.g. "MERDXX"), always derived from
+   * `colours` via buildColourCode() — never typed by hand.
+   */
   colourCode: string
+  /** Up to 3 colour names, in order (main / secondary / trim), e.g. ["Marine", "Red"]. */
+  colours: string[]
   category: string
   sizeTemplate: SizeTemplateKey
   allowKids: boolean
   allowAdults: boolean
   active: boolean
-  /**
-   * Up to 3 manually-picked swatch colours (hex), purely a visual reference
-   * for the garment card — not used in SKU generation, which always reads
-   * `colourCode`.
-   */
-  swatches: string[]
 }
 
 export interface Blueprint {

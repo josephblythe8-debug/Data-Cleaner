@@ -17,6 +17,18 @@ create table if not exists public.clubs (
 );
 
 -- ---------------------------------------------------------------------------
+-- colour_library — named colours (e.g. "Marine") mapped to the 2-letter
+-- abbreviation used to build a garment's colour_code (e.g. "ME"). Not a
+-- foreign key from garments.colours: garments store the chosen names as
+-- plain text, matching src/lib/mockData.ts.
+-- ---------------------------------------------------------------------------
+create table if not exists public.colour_library (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  abbreviation text not null check (char_length(abbreviation) = 2)
+);
+
+-- ---------------------------------------------------------------------------
 -- garments
 -- ---------------------------------------------------------------------------
 create type public.size_template as enum ('kids', 'adults', 'socks', 'osfa');
@@ -26,16 +38,18 @@ create table if not exists public.garments (
   name text not null,
   range_code text not null,
   style_code text not null,
+  -- The COLOUR segment of the SKU (e.g. "MERDXX"), always derived client-side
+  -- from `colours` via buildColourCode() — never typed by hand.
   colour_code text not null,
+  -- Up to 3 colour names, in order (main / secondary / trim), e.g.
+  -- ARRAY['Marine', 'Red']. Source of truth for colour_code.
+  colours text[] not null default '{}',
   category text not null,
   size_template public.size_template not null,
   allow_kids boolean not null default false,
   allow_adults boolean not null default true,
   active boolean not null default true,
-  -- Up to 3 manually-picked hex swatches, purely a visual reference on the
-  -- garment card — SKU generation always reads colour_code, never this.
-  swatches text[] not null default '{}',
-  constraint garments_swatches_max_3 check (array_length(swatches, 1) is null or array_length(swatches, 1) <= 3)
+  constraint garments_colours_max_3 check (array_length(colours, 1) is null or array_length(colours, 1) <= 3)
 );
 
 -- ---------------------------------------------------------------------------
@@ -92,6 +106,7 @@ create index if not exists store_garments_project_id_idx on public.store_garment
 -- (e.g. scope by an org_id column) if the app grows multi-tenant.
 -- ---------------------------------------------------------------------------
 alter table public.clubs enable row level security;
+alter table public.colour_library enable row level security;
 alter table public.garments enable row level security;
 alter table public.blueprints enable row level security;
 alter table public.blueprint_garments enable row level security;
@@ -101,6 +116,11 @@ alter table public.store_garments enable row level security;
 create policy "Authenticated users can read clubs" on public.clubs
   for select to authenticated using (true);
 create policy "Authenticated users can write clubs" on public.clubs
+  for all to authenticated using (true) with check (true);
+
+create policy "Authenticated users can read colour_library" on public.colour_library
+  for select to authenticated using (true);
+create policy "Authenticated users can write colour_library" on public.colour_library
   for all to authenticated using (true) with check (true);
 
 create policy "Authenticated users can read garments" on public.garments

@@ -3,11 +3,14 @@
  * Run with `npm run test:sku`.
  *
  *   1. Asserts the six SKU examples from the spec produce exact strings.
- *   2. Builds the Cricket Template blueprint for club ETDC and prints every
+ *   2. Asserts the colour code engine builds MERDXX/CRRDME from named
+ *      colours (Marine/Red/Cream), not typed by hand.
+ *   3. Builds the Cricket Template blueprint for club ETDC and prints every
  *      generated parent + variant SKU.
- *   3. Prints a sample BigCommerce CSV (first ~15 rows).
+ *   4. Prints a sample BigCommerce CSV (first ~15 rows).
  */
 import { runSkuAssertions } from '../src/lib/sku'
+import { runColourCodeAssertions } from '../src/lib/colourCode'
 import { applyBlueprint } from '../src/lib/blueprintEngine'
 import { generateProducts } from '../src/lib/productGenerator'
 import { renderCsv } from '../src/lib/csvExport'
@@ -50,9 +53,30 @@ if (exitCode !== 0) {
 console.log('\nAll SKU assertions passed.')
 
 // ---------------------------------------------------------------------------
-// 2. Build Cricket Template blueprint for club ETDC
+// 2. Colour code assertions
 // ---------------------------------------------------------------------------
-section('2. Cricket Template blueprint applied to club ETDC')
+section('2. Colour code assertions')
+
+const colourAssertions = runColourCodeAssertions()
+for (const a of colourAssertions) {
+  const pass = a.actual === a.expected
+  const icon = pass ? 'PASS' : 'FAIL'
+  console.log(`[${icon}] ${a.description}`)
+  console.log(`       expected: ${a.expected}`)
+  console.log(`       actual:   ${a.actual}`)
+  if (!pass) exitCode = 1
+}
+
+if (exitCode !== 0) {
+  console.error('\nColour code assertions FAILED. Aborting before blueprint/CSV steps.')
+  process.exit(exitCode)
+}
+console.log('\nAll colour code assertions passed.')
+
+// ---------------------------------------------------------------------------
+// 3. Build Cricket Template blueprint for club ETDC
+// ---------------------------------------------------------------------------
+section('3. Cricket Template blueprint applied to club ETDC')
 
 const club = seedClubs.find((c) => c.clubCode === 'ETDC')
 if (!club) {
@@ -106,9 +130,9 @@ if (!validation.isValid) {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Sample CSV
+// 4. Sample CSV
 // ---------------------------------------------------------------------------
-section('3. Sample BigCommerce CSV (first 15 rows)')
+section('4. Sample BigCommerce CSV (first 15 rows)')
 const csv = renderCsv(products, club)
 const lines = csv.split('\n')
 console.log(lines.slice(0, 15).join('\n'))

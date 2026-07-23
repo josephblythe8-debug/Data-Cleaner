@@ -12,21 +12,33 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { SwatchInput } from '@/components/garments/SwatchInput'
+import { ColourSlotsInput } from '@/components/garments/ColourSlotsInput'
+import { useColourNames } from '@/hooks/useColourNames'
+import { buildColourCode } from '@/lib/colourCode'
 import { SIZE_TEMPLATE_LABELS, type SizeTemplateKey } from '@/lib/sizeTemplates'
 import type { GarmentInput } from '@/hooks/useGarments'
 import type { Garment } from '@/lib/types'
 
-const EMPTY: GarmentInput = {
+interface GarmentFormState {
+  name: string
+  rangeCode: string
+  styleCode: string
+  colours: string[]
+  category: string
+  sizeTemplate: SizeTemplateKey
+  allowKids: boolean
+  allowAdults: boolean
+}
+
+const EMPTY: GarmentFormState = {
   name: '',
   rangeCode: '',
   styleCode: '',
-  colourCode: '',
+  colours: [],
   category: '',
   sizeTemplate: 'adults',
   allowKids: true,
   allowAdults: true,
-  swatches: [],
 }
 
 interface GarmentFormDialogProps {
@@ -37,7 +49,8 @@ interface GarmentFormDialogProps {
 }
 
 export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: GarmentFormDialogProps) {
-  const [form, setForm] = useState<GarmentInput>(EMPTY)
+  const { colourNames } = useColourNames()
+  const [form, setForm] = useState<GarmentFormState>(EMPTY)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -48,12 +61,11 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
               name: garment.name,
               rangeCode: garment.rangeCode,
               styleCode: garment.styleCode,
-              colourCode: garment.colourCode,
+              colours: garment.colours,
               category: garment.category,
               sizeTemplate: garment.sizeTemplate,
               allowKids: garment.allowKids,
               allowAdults: garment.allowAdults,
-              swatches: garment.swatches,
             }
           : EMPTY,
       )
@@ -61,14 +73,16 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
   }, [open, garment])
 
   const isValid =
-    form.name.trim() && form.rangeCode.trim() && form.styleCode.trim() && form.colourCode.trim() && form.category.trim()
+    form.name.trim() && form.rangeCode.trim() && form.styleCode.trim() && form.colours.length > 0 && form.category.trim()
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!isValid) return
     setSaving(true)
     try {
-      await onSubmit(form)
+      const byName = new Map(colourNames.map((c) => [c.name, c]))
+      const colourCode = buildColourCode(form.colours.map((name) => byName.get(name)?.abbreviation ?? ''))
+      await onSubmit({ ...form, colourCode })
       onOpenChange(false)
     } finally {
       setSaving(false)
@@ -96,7 +110,7 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="range">Range Code</Label>
               <Input
@@ -117,23 +131,13 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
                 required
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="colour">Colour Code</Label>
-              <Input
-                id="colour"
-                placeholder="MERDXX"
-                value={form.colourCode}
-                onChange={(e) => setForm({ ...form, colourCode: e.target.value.toUpperCase() })}
-                required
-              />
-            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <Label>Colours (up to 3)</Label>
-            <SwatchInput
-              value={form.swatches}
-              onChange={(swatches) => setForm({ ...form, swatches })}
+            <ColourSlotsInput
+              value={form.colours}
+              onChange={(colours) => setForm({ ...form, colours })}
             />
           </div>
 

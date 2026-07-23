@@ -9,12 +9,13 @@ export interface GarmentInput {
   name: string
   rangeCode: string
   styleCode: string
+  /** Derived from `colours` via buildColourCode() — never typed by hand. */
   colourCode: string
+  colours: string[]
   category: string
   sizeTemplate: SizeTemplateKey
   allowKids: boolean
   allowAdults: boolean
-  swatches: string[]
 }
 
 function mockSnapshot() {
@@ -27,12 +28,12 @@ function fromRow(row: {
   range_code: string
   style_code: string
   colour_code: string
+  colours: string[] | null
   category: string
   size_template: SizeTemplateKey
   allow_kids: boolean
   allow_adults: boolean
   active: boolean
-  swatches: string[] | null
 }): Garment {
   return {
     id: row.id,
@@ -40,12 +41,12 @@ function fromRow(row: {
     rangeCode: row.range_code,
     styleCode: row.style_code,
     colourCode: row.colour_code,
+    colours: row.colours ?? [],
     category: row.category,
     sizeTemplate: row.size_template,
     allowKids: row.allow_kids,
     allowAdults: row.allow_adults,
     active: row.active,
-    swatches: row.swatches ?? [],
   }
 }
 
@@ -82,11 +83,11 @@ export function useGarments() {
           range_code: input.rangeCode,
           style_code: input.styleCode,
           colour_code: input.colourCode,
+          colours: input.colours,
           category: input.category,
           size_template: input.sizeTemplate,
           allow_kids: input.allowKids,
           allow_adults: input.allowAdults,
-          swatches: input.swatches,
           active: true,
         })
         .select()
@@ -114,11 +115,11 @@ export function useGarments() {
           ...(patch.rangeCode !== undefined && { range_code: patch.rangeCode }),
           ...(patch.styleCode !== undefined && { style_code: patch.styleCode }),
           ...(patch.colourCode !== undefined && { colour_code: patch.colourCode }),
+          ...(patch.colours !== undefined && { colours: patch.colours }),
           ...(patch.category !== undefined && { category: patch.category }),
           ...(patch.sizeTemplate !== undefined && { size_template: patch.sizeTemplate }),
           ...(patch.allowKids !== undefined && { allow_kids: patch.allowKids }),
           ...(patch.allowAdults !== undefined && { allow_adults: patch.allowAdults }),
-          ...(patch.swatches !== undefined && { swatches: patch.swatches }),
         })
         .eq('id', id)
       if (error) throw error

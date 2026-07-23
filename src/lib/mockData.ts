@@ -3,7 +3,24 @@
  * swapping the data client for a real Supabase-backed one is a drop-in
  * change. Also used as the source for `supabase/seed.sql`.
  */
-import type { Blueprint, BlueprintGarment, Club, Garment, StoreGarment, StoreProject } from './types'
+import type {
+  Blueprint,
+  BlueprintGarment,
+  Club,
+  ColourName,
+  Garment,
+  StoreGarment,
+  StoreProject,
+} from './types'
+
+// The colour library: name -> 2-letter abbreviation used to build the
+// COLOUR segment of a SKU (see src/lib/colourCode.ts). Extensible via
+// "+ New colour" in the garment form — this is just the starter set.
+export const seedColourNames: ColourName[] = [
+  { id: 'colour_marine', name: 'Marine', abbreviation: 'ME' },
+  { id: 'colour_red', name: 'Red', abbreviation: 'RD' },
+  { id: 'colour_cream', name: 'Cream', abbreviation: 'CR' },
+]
 
 export const seedClubs: Club[] = [
   {
@@ -24,8 +41,10 @@ export const seedClubs: Club[] = [
   },
 ]
 
-const MERDXX_SWATCHES = ['#7f1d3d', '#d4a72c']
-const CRRDME_SWATCHES = ['#b91c2b', '#1e2a4a']
+// MERDXX = Marine (ME) + Red (RD) + none (XX)
+const MERDXX_COLOURS = ['Marine', 'Red']
+// CRRDME = Cream (CR) + Red (RD) + Marine (ME)
+const CRRDME_COLOURS = ['Cream', 'Red', 'Marine']
 
 export const seedGarments: Garment[] = [
   {
@@ -34,12 +53,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'LINC',
     styleCode: '061',
     colourCode: 'MERDXX',
+    colours: MERDXX_COLOURS,
     category: 'Polo',
     sizeTemplate: 'adults',
     allowKids: true,
     allowAdults: true,
     active: true,
-    swatches: MERDXX_SWATCHES,
   },
   {
     id: 'garment_club_hoodie',
@@ -47,12 +66,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'LINC',
     styleCode: '112',
     colourCode: 'MERDXX',
+    colours: MERDXX_COLOURS,
     category: 'Hoodie',
     sizeTemplate: 'adults',
     allowKids: true,
     allowAdults: true,
     active: true,
-    swatches: MERDXX_SWATCHES,
   },
   {
     id: 'garment_training_tee',
@@ -60,12 +79,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'TEAM',
     styleCode: '204',
     colourCode: 'CRRDME',
+    colours: CRRDME_COLOURS,
     category: 'Tee',
     sizeTemplate: 'adults',
     allowKids: true,
     allowAdults: true,
     active: true,
-    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_training_shorts',
@@ -73,12 +92,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'TEAM',
     styleCode: '210',
     colourCode: 'CRRDME',
+    colours: CRRDME_COLOURS,
     category: 'Shorts',
     sizeTemplate: 'adults',
     allowKids: true,
     allowAdults: true,
     active: true,
-    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_playing_shirt_ss',
@@ -86,12 +105,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'TEAM',
     styleCode: '327',
     colourCode: 'CRRDME',
+    colours: CRRDME_COLOURS,
     category: 'Playing Shirt',
     sizeTemplate: 'adults',
     allowKids: true,
     allowAdults: true,
     active: true,
-    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_playing_shirt_ls',
@@ -99,12 +118,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'TEAM',
     styleCode: '328',
     colourCode: 'CRRDME',
+    colours: CRRDME_COLOURS,
     category: 'Playing Shirt',
     sizeTemplate: 'adults',
     allowKids: true,
     allowAdults: true,
     active: true,
-    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_playing_pants',
@@ -112,12 +131,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'TEAM',
     styleCode: '330',
     colourCode: 'CRRDME',
+    colours: CRRDME_COLOURS,
     category: 'Pants',
     sizeTemplate: 'adults',
     allowKids: true,
     allowAdults: true,
     active: true,
-    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_club_cap',
@@ -125,12 +144,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'LINC',
     styleCode: '400',
     colourCode: 'MERDXX',
+    colours: MERDXX_COLOURS,
     category: 'Headwear',
     sizeTemplate: 'osfa',
     allowKids: false,
     allowAdults: true,
     active: true,
-    swatches: MERDXX_SWATCHES,
   },
   {
     id: 'garment_club_socks',
@@ -138,12 +157,12 @@ export const seedGarments: Garment[] = [
     rangeCode: 'LINC',
     styleCode: '410',
     colourCode: 'MERDXX',
+    colours: MERDXX_COLOURS,
     category: 'Socks',
     sizeTemplate: 'socks',
     allowKids: true,
     allowAdults: true,
     active: true,
-    swatches: MERDXX_SWATCHES,
   },
 ]
 

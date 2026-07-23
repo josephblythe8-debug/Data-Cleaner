@@ -22,7 +22,7 @@ export function GarmentLibrary() {
       .filter((g) => (showArchived ? true : g.active))
       .filter((g) =>
         q
-          ? [g.name, g.rangeCode, g.styleCode, g.colourCode, g.category].some((v) =>
+          ? [g.name, g.rangeCode, g.styleCode, g.colourCode, g.category, ...g.colours].some((v) =>
               v.toLowerCase().includes(q),
             )
           : true,
@@ -111,21 +111,15 @@ export function GarmentLibrary() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 rounded-md bg-slate-100 px-2 py-1 dark:bg-slate-800">
-                {garment.swatches.length > 0 && (
-                  <span className="flex shrink-0 -space-x-1">
-                    {garment.swatches.map((hex, i) => (
-                      <span
-                        key={i}
-                        className="h-3.5 w-3.5 rounded-full border border-white dark:border-slate-800"
-                        style={{ background: hex }}
-                      />
-                    ))}
-                  </span>
-                )}
+              <div className="flex flex-col gap-1 rounded-md bg-slate-100 px-2 py-1.5 dark:bg-slate-800">
                 <p className="font-mono text-xs text-slate-600 dark:text-slate-300">
                   {garment.rangeCode}-{garment.styleCode}-0-TEAM-{garment.colourCode}-ALL
                 </p>
+                {garment.colours.length > 0 && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {garment.colours.join(' / ')}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-1.5">
