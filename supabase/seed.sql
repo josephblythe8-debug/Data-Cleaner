@@ -7,29 +7,17 @@ values
   ('Western Thunder Cricket Club', 'WTCC', 'Cricket', 'O''Neills')
 on conflict (club_code) do nothing;
 
-insert into public.colours (code, name, swatch_hex, swatch_hex_2)
+insert into public.garments (name, range_code, style_code, colour_code, category, size_template, allow_kids, allow_adults, active, swatches)
 values
-  ('MERDXX', 'Maroon / Gold',      '#7f1d3d', '#d4a72c'),
-  ('CRRDME', 'Crimson / Navy',     '#b91c2b', '#1e2a4a'),
-  ('NVYWHT', 'Navy / White',       '#1e2a4a', '#f8fafc'),
-  ('RYLGLD', 'Royal Blue / Gold',  '#1d4ed8', '#d4a72c'),
-  ('BLKRED', 'Black / Red',        '#111827', '#b91c2b'),
-  ('GRNWHT', 'Green / White',      '#166534', '#f8fafc'),
-  ('SKYBLK', 'Sky Blue / Black',   '#0ea5e9', '#111827'),
-  ('PURORG', 'Purple / Orange',    '#6d28d9', '#ea580c')
-on conflict (code) do nothing;
-
-insert into public.garments (name, range_code, style_code, colour_code, category, size_template, allow_kids, allow_adults, active)
-values
-  ('Club Polo',        'LINC', '061', 'MERDXX', 'Polo',          'adults', true,  true, true),
-  ('Club Hoodie',       'LINC', '112', 'MERDXX', 'Hoodie',        'adults', true,  true, true),
-  ('Training Tee',      'TEAM', '204', 'CRRDME', 'Tee',           'adults', true,  true, true),
-  ('Training Shorts',   'TEAM', '210', 'CRRDME', 'Shorts',        'adults', true,  true, true),
-  ('Playing Shirt SS',  'TEAM', '327', 'CRRDME', 'Playing Shirt', 'adults', true,  true, true),
-  ('Playing Shirt LS',  'TEAM', '328', 'CRRDME', 'Playing Shirt', 'adults', true,  true, true),
-  ('Playing Pants',     'TEAM', '330', 'CRRDME', 'Pants',         'adults', true,  true, true),
-  ('Club Cap',          'LINC', '400', 'MERDXX', 'Headwear',      'osfa',   false, true, true),
-  ('Club Socks',        'LINC', '410', 'MERDXX', 'Socks',         'socks',  true,  true, true);
+  ('Club Polo',        'LINC', '061', 'MERDXX', 'Polo',          'adults', true,  true, true, array['#7f1d3d', '#d4a72c']),
+  ('Club Hoodie',       'LINC', '112', 'MERDXX', 'Hoodie',        'adults', true,  true, true, array['#7f1d3d', '#d4a72c']),
+  ('Training Tee',      'TEAM', '204', 'CRRDME', 'Tee',           'adults', true,  true, true, array['#b91c2b', '#1e2a4a']),
+  ('Training Shorts',   'TEAM', '210', 'CRRDME', 'Shorts',        'adults', true,  true, true, array['#b91c2b', '#1e2a4a']),
+  ('Playing Shirt SS',  'TEAM', '327', 'CRRDME', 'Playing Shirt', 'adults', true,  true, true, array['#b91c2b', '#1e2a4a']),
+  ('Playing Shirt LS',  'TEAM', '328', 'CRRDME', 'Playing Shirt', 'adults', true,  true, true, array['#b91c2b', '#1e2a4a']),
+  ('Playing Pants',     'TEAM', '330', 'CRRDME', 'Pants',         'adults', true,  true, true, array['#b91c2b', '#1e2a4a']),
+  ('Club Cap',          'LINC', '400', 'MERDXX', 'Headwear',      'osfa',   false, true, true, array['#7f1d3d', '#d4a72c']),
+  ('Club Socks',        'LINC', '410', 'MERDXX', 'Socks',         'socks',  true,  true, true, array['#7f1d3d', '#d4a72c']);
 
 with blueprint as (
   insert into public.blueprints (name, sport)

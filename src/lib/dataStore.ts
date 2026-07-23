@@ -8,25 +8,15 @@ import {
   seedBlueprintGarments,
   seedBlueprints,
   seedClubs,
-  seedColours,
   seedGarments,
   seedStoreGarments,
   seedStoreProjects,
 } from './mockData'
-import type {
-  Blueprint,
-  BlueprintGarment,
-  Club,
-  ColourOption,
-  Garment,
-  StoreGarment,
-  StoreProject,
-} from './types'
+import type { Blueprint, BlueprintGarment, Club, Garment, StoreGarment, StoreProject } from './types'
 
 interface Db {
   clubs: Club[]
   garments: Garment[]
-  colours: ColourOption[]
   blueprints: Blueprint[]
   blueprintGarments: BlueprintGarment[]
   storeProjects: StoreProject[]
@@ -37,7 +27,6 @@ function cloneSeed(): Db {
   return {
     clubs: structuredClone(seedClubs),
     garments: structuredClone(seedGarments),
-    colours: structuredClone(seedColours),
     blueprints: structuredClone(seedBlueprints),
     blueprintGarments: structuredClone(seedBlueprintGarments),
     storeProjects: structuredClone(seedStoreProjects),

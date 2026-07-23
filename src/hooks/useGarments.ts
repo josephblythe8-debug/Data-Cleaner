@@ -14,6 +14,7 @@ export interface GarmentInput {
   sizeTemplate: SizeTemplateKey
   allowKids: boolean
   allowAdults: boolean
+  swatches: string[]
 }
 
 function mockSnapshot() {
@@ -31,6 +32,7 @@ function fromRow(row: {
   allow_kids: boolean
   allow_adults: boolean
   active: boolean
+  swatches: string[] | null
 }): Garment {
   return {
     id: row.id,
@@ -43,6 +45,7 @@ function fromRow(row: {
     allowKids: row.allow_kids,
     allowAdults: row.allow_adults,
     active: row.active,
+    swatches: row.swatches ?? [],
   }
 }
 
@@ -83,6 +86,7 @@ export function useGarments() {
           size_template: input.sizeTemplate,
           allow_kids: input.allowKids,
           allow_adults: input.allowAdults,
+          swatches: input.swatches,
           active: true,
         })
         .select()
@@ -114,6 +118,7 @@ export function useGarments() {
           ...(patch.sizeTemplate !== undefined && { size_template: patch.sizeTemplate }),
           ...(patch.allowKids !== undefined && { allow_kids: patch.allowKids }),
           ...(patch.allowAdults !== undefined && { allow_adults: patch.allowAdults }),
+          ...(patch.swatches !== undefined && { swatches: patch.swatches }),
         })
         .eq('id', id)
       if (error) throw error

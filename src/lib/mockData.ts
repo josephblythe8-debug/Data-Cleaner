@@ -3,21 +3,7 @@
  * swapping the data client for a real Supabase-backed one is a drop-in
  * change. Also used as the source for `supabase/seed.sql`.
  */
-import type { Blueprint, BlueprintGarment, Club, ColourOption, Garment, StoreGarment, StoreProject } from './types'
-
-// Colour codes are opaque supplier CAD codes (see src/lib/sku.ts) — the
-// name/swatch fields here are just a friendly, clickable reference so the
-// coordinator doesn't have to remember or retype them for every club.
-export const seedColours: ColourOption[] = [
-  { id: 'colour_merdxx', code: 'MERDXX', name: 'Maroon / Gold', swatchHex: '#7f1d3d', swatchHex2: '#d4a72c' },
-  { id: 'colour_crrdme', code: 'CRRDME', name: 'Crimson / Navy', swatchHex: '#b91c2b', swatchHex2: '#1e2a4a' },
-  { id: 'colour_nvywht', code: 'NVYWHT', name: 'Navy / White', swatchHex: '#1e2a4a', swatchHex2: '#f8fafc' },
-  { id: 'colour_rylgld', code: 'RYLGLD', name: 'Royal Blue / Gold', swatchHex: '#1d4ed8', swatchHex2: '#d4a72c' },
-  { id: 'colour_blkred', code: 'BLKRED', name: 'Black / Red', swatchHex: '#111827', swatchHex2: '#b91c2b' },
-  { id: 'colour_grnwht', code: 'GRNWHT', name: 'Green / White', swatchHex: '#166534', swatchHex2: '#f8fafc' },
-  { id: 'colour_skyblk', code: 'SKYBLK', name: 'Sky Blue / Black', swatchHex: '#0ea5e9', swatchHex2: '#111827' },
-  { id: 'colour_puror', code: 'PURORG', name: 'Purple / Orange', swatchHex: '#6d28d9', swatchHex2: '#ea580c' },
-]
+import type { Blueprint, BlueprintGarment, Club, Garment, StoreGarment, StoreProject } from './types'
 
 export const seedClubs: Club[] = [
   {
@@ -38,6 +24,9 @@ export const seedClubs: Club[] = [
   },
 ]
 
+const MERDXX_SWATCHES = ['#7f1d3d', '#d4a72c']
+const CRRDME_SWATCHES = ['#b91c2b', '#1e2a4a']
+
 export const seedGarments: Garment[] = [
   {
     id: 'garment_club_polo',
@@ -50,6 +39,7 @@ export const seedGarments: Garment[] = [
     allowKids: true,
     allowAdults: true,
     active: true,
+    swatches: MERDXX_SWATCHES,
   },
   {
     id: 'garment_club_hoodie',
@@ -62,6 +52,7 @@ export const seedGarments: Garment[] = [
     allowKids: true,
     allowAdults: true,
     active: true,
+    swatches: MERDXX_SWATCHES,
   },
   {
     id: 'garment_training_tee',
@@ -74,6 +65,7 @@ export const seedGarments: Garment[] = [
     allowKids: true,
     allowAdults: true,
     active: true,
+    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_training_shorts',
@@ -86,6 +78,7 @@ export const seedGarments: Garment[] = [
     allowKids: true,
     allowAdults: true,
     active: true,
+    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_playing_shirt_ss',
@@ -98,6 +91,7 @@ export const seedGarments: Garment[] = [
     allowKids: true,
     allowAdults: true,
     active: true,
+    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_playing_shirt_ls',
@@ -110,6 +104,7 @@ export const seedGarments: Garment[] = [
     allowKids: true,
     allowAdults: true,
     active: true,
+    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_playing_pants',
@@ -122,6 +117,7 @@ export const seedGarments: Garment[] = [
     allowKids: true,
     allowAdults: true,
     active: true,
+    swatches: CRRDME_SWATCHES,
   },
   {
     id: 'garment_club_cap',
@@ -134,6 +130,7 @@ export const seedGarments: Garment[] = [
     allowKids: false,
     allowAdults: true,
     active: true,
+    swatches: MERDXX_SWATCHES,
   },
   {
     id: 'garment_club_socks',
@@ -146,6 +143,7 @@ export const seedGarments: Garment[] = [
     allowKids: true,
     allowAdults: true,
     active: true,
+    swatches: MERDXX_SWATCHES,
   },
 ]
 

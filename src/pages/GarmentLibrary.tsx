@@ -6,14 +6,11 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { GarmentFormDialog } from '@/components/garments/GarmentFormDialog'
 import { useGarments, type GarmentInput } from '@/hooks/useGarments'
-import { useColours } from '@/hooks/useColours'
 import { SIZE_TEMPLATE_LABELS } from '@/lib/sizeTemplates'
 import type { Garment } from '@/lib/types'
 
 export function GarmentLibrary() {
   const { garments, addGarment, updateGarment, archiveGarment, unarchiveGarment } = useGarments()
-  const { colours } = useColours()
-  const colourByCode = useMemo(() => new Map(colours.map((c) => [c.code, c])), [colours])
   const [search, setSearch] = useState('')
   const [showArchived, setShowArchived] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -115,17 +112,16 @@ export function GarmentLibrary() {
               </div>
 
               <div className="flex items-center gap-2 rounded-md bg-slate-100 px-2 py-1 dark:bg-slate-800">
-                {colourByCode.has(garment.colourCode) && (
-                  <span
-                    className="h-3 w-3 shrink-0 rounded-full border border-black/10 dark:border-white/10"
-                    style={
-                      colourByCode.get(garment.colourCode)!.swatchHex2
-                        ? {
-                            background: `linear-gradient(135deg, ${colourByCode.get(garment.colourCode)!.swatchHex} 50%, ${colourByCode.get(garment.colourCode)!.swatchHex2} 50%)`,
-                          }
-                        : { background: colourByCode.get(garment.colourCode)!.swatchHex }
-                    }
-                  />
+                {garment.swatches.length > 0 && (
+                  <span className="flex shrink-0 -space-x-1">
+                    {garment.swatches.map((hex, i) => (
+                      <span
+                        key={i}
+                        className="h-3.5 w-3.5 rounded-full border border-white dark:border-slate-800"
+                        style={{ background: hex }}
+                      />
+                    ))}
+                  </span>
                 )}
                 <p className="font-mono text-xs text-slate-600 dark:text-slate-300">
                   {garment.rangeCode}-{garment.styleCode}-0-TEAM-{garment.colourCode}-ALL
