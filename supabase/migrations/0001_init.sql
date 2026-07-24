@@ -39,6 +39,9 @@ create table if not exists public.garments (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   range_code text not null,
+  -- Human-readable range name (e.g. "Lincoln") from the supplier catalogue
+  -- export — display only, never part of a SKU.
+  range_name text not null default '',
   style_code text not null,
   category text not null,
   size_template public.size_template not null,
@@ -46,6 +49,8 @@ create table if not exists public.garments (
   allow_adults boolean not null default true,
   active boolean not null default true
 );
+
+create unique index if not exists garments_range_style_idx on public.garments (upper(range_code), upper(style_code));
 
 -- ---------------------------------------------------------------------------
 -- store_projects

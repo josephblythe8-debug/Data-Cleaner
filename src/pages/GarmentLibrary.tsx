@@ -1,27 +1,36 @@
 import { useMemo, useState } from 'react'
-import { Archive, ArchiveRestore, Pencil, Plus, Search } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Plus, Search, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { GarmentFormDialog } from '@/components/garments/GarmentFormDialog'
+import { CatalogueImportDialog } from '@/components/garments/CatalogueImportDialog'
 import { useGarments, type GarmentInput } from '@/hooks/useGarments'
 import { SIZE_TEMPLATE_LABELS } from '@/lib/sizeTemplates'
 import type { Garment } from '@/lib/types'
 
 export function GarmentLibrary() {
-  const { garments, addGarment, updateGarment, archiveGarment, unarchiveGarment } = useGarments()
+  const { garments, addGarment, updateGarment, importCatalogue, archiveGarment, unarchiveGarment } = useGarments()
   const [search, setSearch] = useState('')
   const [showArchived, setShowArchived] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editingGarment, setEditingGarment] = useState<Garment | undefined>(undefined)
+
+  const existingKeys = useMemo(
+    () => new Set(garments.map((g) => `${g.rangeCode.trim().toUpperCase()}|${g.styleCode.trim().toUpperCase()}`)),
+    [garments],
+  )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return garments
       .filter((g) => (showArchived ? true : g.active))
       .filter((g) =>
-        q ? [g.name, g.rangeCode, g.styleCode, g.category].some((v) => v.toLowerCase().includes(q)) : true,
+        q
+          ? [g.name, g.rangeCode, g.rangeName, g.styleCode, g.category].some((v) => v.toLowerCase().includes(q))
+          : true,
       )
   }, [garments, search, showArchived])
 
@@ -52,9 +61,14 @@ export function GarmentLibrary() {
             The master catalogue of garments products are generated from.
           </p>
         </div>
-        <Button onClick={openAdd}>
-          <Plus /> Add Garment
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload /> Import Catalogue
+          </Button>
+          <Button onClick={openAdd}>
+            <Plus /> Add Garment
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -109,6 +123,7 @@ export function GarmentLibrary() {
 
               <p className="rounded-md bg-slate-100 px-2 py-1.5 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 {garment.rangeCode}-{garment.styleCode}
+                {garment.rangeName && <span className="ml-1.5 font-sans text-slate-400">· {garment.rangeName}</span>}
               </p>
 
               <div className="flex flex-wrap gap-1.5">
@@ -132,6 +147,13 @@ export function GarmentLibrary() {
         onOpenChange={setDialogOpen}
         garment={editingGarment}
         onSubmit={handleSubmit}
+      />
+
+      <CatalogueImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        existingKeys={existingKeys}
+        onImport={importCatalogue}
       />
     </div>
   )

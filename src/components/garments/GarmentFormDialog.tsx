@@ -19,6 +19,7 @@ import type { Garment } from '@/lib/types'
 const EMPTY: GarmentInput = {
   name: '',
   rangeCode: '',
+  rangeName: '',
   styleCode: '',
   category: '',
   sizeTemplate: 'adults',
@@ -44,6 +45,7 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
           ? {
               name: garment.name,
               rangeCode: garment.rangeCode,
+              rangeName: garment.rangeName,
               styleCode: garment.styleCode,
               category: garment.category,
               sizeTemplate: garment.sizeTemplate,
@@ -112,6 +114,16 @@ export function GarmentFormDialog({ open, onOpenChange, garment, onSubmit }: Gar
                 required
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="rangeName">Range Name</Label>
+            <Input
+              id="rangeName"
+              placeholder="Lincoln (optional)"
+              value={form.rangeName}
+              onChange={(e) => setForm({ ...form, rangeName: e.target.value })}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">

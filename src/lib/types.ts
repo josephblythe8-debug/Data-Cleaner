@@ -27,6 +27,8 @@ export interface Garment {
   id: string
   name: string
   rangeCode: string
+  /** Human-readable name of the range (e.g. "Lincoln") — display only, never part of a SKU. */
+  rangeName: string
   styleCode: string
   category: string
   sizeTemplate: SizeTemplateKey
@@ -54,8 +56,8 @@ export interface StoreGarment {
   /**
    * Sell price per age-group product this garment generates (a garment
    * split into Adults + Kids products commonly sells at two different
-   * price points). Missing a price for a product that will actually be
-   * generated is a blocking export error.
+   * price points). Optional — a product with no price yet still exports,
+   * just with a blank Price column and a non-blocking warning.
    */
   priceByAgeGroup: Partial<Record<AgeGroup, number>>
   sortOrder: number

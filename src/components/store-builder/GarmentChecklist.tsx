@@ -22,7 +22,9 @@ export function GarmentChecklist({ selected, onToggle, disabledIds, className }:
     const q = search.trim().toLowerCase()
     return garments
       .filter((g) => g.active)
-      .filter((g) => (q ? [g.name, g.category, g.rangeCode].some((v) => v.toLowerCase().includes(q)) : true))
+      .filter((g) =>
+        q ? [g.name, g.category, g.rangeCode, g.rangeName].some((v) => v.toLowerCase().includes(q)) : true,
+      )
   }, [garments, search])
 
   function selectAll() {

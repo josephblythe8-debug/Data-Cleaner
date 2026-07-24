@@ -11,8 +11,11 @@ are always *generated from* garments, never typed by hand.
 Garments are split into two layers, since every club is different:
 
 - **Garment Library** — the catalogue-level facts that never change:
-  Range Code, Style Code, category, and which size template/age brackets
-  the style is cut in. These come from the supplier catalogue.
+  Range Code, Range Name, Style Code, category, and which size
+  template/age brackets the style is cut in. These come from the supplier
+  catalogue and can be **bulk-imported from a ClubHub product list
+  export** instead of typed in one at a time — see "Importing the
+  catalogue" below.
 - **Store Builder** — colour and exact sizing, chosen per club when a
   garment is added to that club's store, since two clubs never want the
   same colourway or size run.
@@ -67,6 +70,18 @@ correctly flagging unrelated products as unmatched, then runs a sample
 brief against the demo garment library and prints matched vs. flagged
 lines.
 
+The catalogue-import engine (the ClubHub product-list bulk loader) has its
+own check too:
+
+```bash
+npm run test:catalogue
+```
+
+This asserts category and Kids/Adults sizing are inferred correctly from
+a style name (e.g. "Sports Bucket Hat" → Headwear, one-size, no kids
+sizing), that a row with no usable data is skipped, and that header
+matching tolerates case differences and a missing optional column.
+
 ## How it's built
 
 The core logic is a set of pure, dependency-free TypeScript modules under
@@ -84,6 +99,7 @@ The core logic is a set of pure, dependency-free TypeScript modules under
 | `briefParser.ts` | Parses free-form brief/email text into candidate product lines (name + optional price), skipping headers, greetings and blank lines. |
 | `spreadsheetParser.ts` | Same job as `briefParser.ts`, for an uploaded spreadsheet (Excel/CSV) instead of pasted text — reads each row's cells by their real type, so a plain numeric price cell (no `$`, no decimals) is found reliably. |
 | `garmentMatcher.ts` | Matches parsed brief/spreadsheet lines against the Garment Library by name (exact/substring/token-overlap scoring), only matching above a confidence threshold — anything else is left unmatched and flagged rather than guessed. |
+| `catalogueParser.ts` | Parses a ClubHub product-list export (Range Code/Range Name/Style Code/Style Name/Sort Order) into Garment Library rows. Category and Kids/Adults sizing aren't in that export, so they're inferred from the Style Name and always shown for review before import, never silently trusted. |
 
 `src/lib/dataStore.ts` + `src/hooks/*` are the data layer. Every hook
 (`useClubs`, `useGarments`, `useColourNames`, `useStoreProjects`,
@@ -139,15 +155,16 @@ src/
   lib/                  Pure engines: sku, colourCode, sizeTemplates,
                          validation, cloneEngine, productGenerator,
                          csvExport, briefParser, spreadsheetParser,
-                         garmentMatcher, mockData, dataStore, config,
-                         supabaseClient
+                         garmentMatcher, catalogueParser, mockData,
+                         dataStore, config, supabaseClient
   hooks/                useClubs, useGarments, useColourNames,
                          useStoreProjects, useStoreProject, useTheme
   components/
     ui/                 shadcn-style primitives (button, card, dialog,
                          textarea, ...)
     layout/              Navbar, page layout
-    garments/            Garment add/edit dialog, colour slot picker
+    garments/            Garment add/edit dialog, colour slot picker,
+                          catalogue-import dialog
     store-builder/        Garment checklist, draggable configured-garment
                            card (colour + per-size picker + price), add-garments
                            dialog, import-brief dialog
@@ -156,6 +173,7 @@ src/
 scripts/
   testSku.ts             npm run test:sku entry point
   testImport.ts          npm run test:import entry point
+  testCatalogue.ts        npm run test:catalogue entry point
 supabase/
   migrations/0001_init.sql   Schema + RLS + storage bucket
   seed.sql                    Demo data seed
@@ -197,6 +215,24 @@ review: matched lines are pre-checked with an editable (optional) price,
 already-in-store matches are flagged and skipped, and unmatched lines are
 flagged in amber so nothing is silently dropped. Only checked, matched
 lines are added — price can be left blank and filled in later.
+
+### Importing the catalogue
+
+Brief-matching is only as good as the Garment Library it matches against —
+so instead of typing every garment in by hand, the "Import Catalogue"
+button on the Garment Library page (not Store Builder — this populates
+the shared catalogue, not one club's store) bulk-loads it from a ClubHub
+product-list export (`.xlsx`/`.csv`). ClubHub's export gives Range Code,
+Range Name, Style Code and Style Name directly, but has no Category or
+Kids/Adults column — those are inferred from keywords in the Style Name
+(e.g. "Bucket Hat" → Headwear, one-size; anything unrecognized →
+"Uncategorised") and shown grouped by category for a quick bulk fix
+before anything is saved, rather than trusted silently. Rows are matched
+to existing garments by Range Code + Style Code: an existing match gets
+its name refreshed (category/sizing are left alone, in case they were
+already corrected by hand), and anything new is created with the
+reviewed category/sizing. Re-importing the same file is safe — it
+updates, not duplicates.
 
 ## SKU structure
 

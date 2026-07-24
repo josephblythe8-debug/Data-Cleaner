@@ -38,17 +38,18 @@ on conflict (name) do nothing;
 
 -- The garment library holds only catalogue-level facts (Range/Style code,
 -- category, size template). Colour and sizing are chosen per club below.
-insert into public.garments (name, range_code, style_code, category, size_template, allow_kids, allow_adults, active)
+insert into public.garments (name, range_code, range_name, style_code, category, size_template, allow_kids, allow_adults, active)
 values
-  ('Club Polo',        'LINC', '061', 'Polo',          'adults', true,  true, true),
-  ('Club Hoodie',       'LINC', '112', 'Hoodie',        'adults', true,  true, true),
-  ('Training Tee',      'TEAM', '204', 'Tee',           'adults', true,  true, true),
-  ('Training Shorts',   'TEAM', '210', 'Shorts',        'adults', true,  true, true),
-  ('Playing Shirt SS',  'TEAM', '327', 'Playing Shirt', 'adults', true,  true, true),
-  ('Playing Shirt LS',  'TEAM', '328', 'Playing Shirt', 'adults', true,  true, true),
-  ('Playing Pants',     'TEAM', '330', 'Pants',         'adults', true,  true, true),
-  ('Club Cap',          'LINC', '400', 'Headwear',      'osfa',   false, true, true),
-  ('Club Socks',        'LINC', '410', 'Socks',         'socks',  true,  true, true);
+  ('Club Polo',        'LINC', 'Lincoln',  '061', 'Polo',          'adults', true,  true, true),
+  ('Club Hoodie',       'LINC', 'Lincoln',  '112', 'Hoodie',        'adults', true,  true, true),
+  ('Training Tee',      'TEAM', 'Teamwear', '204', 'Tee',           'adults', true,  true, true),
+  ('Training Shorts',   'TEAM', 'Teamwear', '210', 'Shorts',        'adults', true,  true, true),
+  ('Playing Shirt SS',  'TEAM', 'Teamwear', '327', 'Playing Shirt', 'adults', true,  true, true),
+  ('Playing Shirt LS',  'TEAM', 'Teamwear', '328', 'Playing Shirt', 'adults', true,  true, true),
+  ('Playing Pants',     'TEAM', 'Teamwear', '330', 'Pants',         'adults', true,  true, true),
+  ('Club Cap',          'LINC', 'Lincoln',  '400', 'Headwear',      'osfa',   false, true, true),
+  ('Club Socks',        'LINC', 'Lincoln',  '410', 'Socks',         'socks',  true,  true, true)
+on conflict (upper(range_code), upper(style_code)) do nothing;
 
 -- A fully-configured demo store (mirrors the mock-mode seed) so a fresh
 -- Supabase project has something to look at immediately.

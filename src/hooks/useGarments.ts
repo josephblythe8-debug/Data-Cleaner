@@ -8,11 +8,29 @@ import type { Garment } from '@/lib/types'
 export interface GarmentInput {
   name: string
   rangeCode: string
+  rangeName: string
   styleCode: string
   category: string
   sizeTemplate: SizeTemplateKey
   allowKids: boolean
   allowAdults: boolean
+}
+
+/** One row from a parsed supplier catalogue export, ready to create or update a Garment. */
+export interface CatalogueImportRow {
+  rangeCode: string
+  rangeName: string
+  styleCode: string
+  styleName: string
+  category: string
+  sizeTemplate: SizeTemplateKey
+  allowKids: boolean
+  allowAdults: boolean
+}
+
+export interface CatalogueImportResult {
+  created: number
+  updated: number
 }
 
 function mockSnapshot() {
@@ -23,6 +41,7 @@ function fromRow(row: {
   id: string
   name: string
   range_code: string
+  range_name: string | null
   style_code: string
   category: string
   size_template: SizeTemplateKey
@@ -34,6 +53,7 @@ function fromRow(row: {
     id: row.id,
     name: row.name,
     rangeCode: row.range_code,
+    rangeName: row.range_name ?? '',
     styleCode: row.style_code,
     category: row.category,
     sizeTemplate: row.size_template,
@@ -74,6 +94,7 @@ export function useGarments() {
         .insert({
           name: input.name,
           range_code: input.rangeCode,
+          range_name: input.rangeName,
           style_code: input.styleCode,
           category: input.category,
           size_template: input.sizeTemplate,
@@ -104,6 +125,7 @@ export function useGarments() {
         .update({
           ...(patch.name !== undefined && { name: patch.name }),
           ...(patch.rangeCode !== undefined && { range_code: patch.rangeCode }),
+          ...(patch.rangeName !== undefined && { range_name: patch.rangeName }),
           ...(patch.styleCode !== undefined && { style_code: patch.styleCode }),
           ...(patch.category !== undefined && { category: patch.category }),
           ...(patch.sizeTemplate !== undefined && { size_template: patch.sizeTemplate }),
@@ -115,6 +137,90 @@ export function useGarments() {
       await refetch()
     },
     [refetch],
+  )
+
+  /**
+   * Bulk-creates/updates garments from a parsed supplier catalogue export,
+   * keyed on (Range Code, Style Code) — the supplier's own unique key.
+   * Re-importing the same file updates the name/range name of garments
+   * that already exist rather than duplicating them, but deliberately
+   * leaves category/sizing alone on an existing match, since a coordinator
+   * may have already corrected an inference-based guess by hand.
+   */
+  const importCatalogue = useCallback(
+    async (rows: CatalogueImportRow[]): Promise<CatalogueImportResult> => {
+      const currentGarments = MOCK_MODE ? getDb().garments : remoteGarments
+      const keyOf = (rangeCode: string, styleCode: string) =>
+        `${rangeCode.trim().toUpperCase()}|${styleCode.trim().toUpperCase()}`
+      const existingByKey = new Map(currentGarments.map((g) => [keyOf(g.rangeCode, g.styleCode), g]))
+
+      let created = 0
+      let updated = 0
+
+      if (MOCK_MODE) {
+        mutate((db) => {
+          let next = db.garments
+          for (const row of rows) {
+            const key = keyOf(row.rangeCode, row.styleCode)
+            const existing = existingByKey.get(key)
+            if (existing) {
+              next = next.map((g) =>
+                g.id === existing.id ? { ...g, name: row.styleName, rangeName: row.rangeName } : g,
+              )
+              updated++
+            } else {
+              const garment: Garment = {
+                id: generateId('garment'),
+                name: row.styleName,
+                rangeCode: row.rangeCode,
+                rangeName: row.rangeName,
+                styleCode: row.styleCode,
+                category: row.category,
+                sizeTemplate: row.sizeTemplate,
+                allowKids: row.allowKids,
+                allowAdults: row.allowAdults,
+                active: true,
+              }
+              next = [...next, garment]
+              existingByKey.set(key, garment)
+              created++
+            }
+          }
+          db.garments = next
+        })
+        return { created, updated }
+      }
+
+      for (const row of rows) {
+        const key = keyOf(row.rangeCode, row.styleCode)
+        const existing = existingByKey.get(key)
+        if (existing) {
+          const { error } = await supabase!
+            .from('garments')
+            .update({ name: row.styleName, range_name: row.rangeName })
+            .eq('id', existing.id)
+          if (error) throw error
+          updated++
+        } else {
+          const { error } = await supabase!.from('garments').insert({
+            name: row.styleName,
+            range_code: row.rangeCode,
+            range_name: row.rangeName,
+            style_code: row.styleCode,
+            category: row.category,
+            size_template: row.sizeTemplate,
+            allow_kids: row.allowKids,
+            allow_adults: row.allowAdults,
+            active: true,
+          })
+          if (error) throw error
+          created++
+        }
+      }
+      await refetch()
+      return { created, updated }
+    },
+    [remoteGarments, refetch],
   )
 
   const setArchived = useCallback(
@@ -137,6 +243,7 @@ export function useGarments() {
     loading: MOCK_MODE ? false : loading,
     addGarment,
     updateGarment,
+    importCatalogue,
     archiveGarment: (id: string) => setArchived(id, false),
     unarchiveGarment: (id: string) => setArchived(id, true),
   }

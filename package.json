@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test:sku": "tsx scripts/testSku.ts",
-    "test:import": "tsx scripts/testImport.ts"
+    "test:import": "tsx scripts/testImport.ts",
+    "test:catalogue": "tsx scripts/testCatalogue.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
