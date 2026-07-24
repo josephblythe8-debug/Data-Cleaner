@@ -1,4 +1,4 @@
-import type { SizeTemplateKey } from './sizeTemplates'
+import type { AgeGroup, SizeTemplateKey } from './sizeTemplates'
 
 export interface Club {
   id: string
@@ -51,6 +51,13 @@ export interface StoreGarment {
   colours: string[]
   /** Exact size codes this club needs, e.g. ["S", "M", "L"] — never a blanket toggle. */
   selectedSizeCodes: string[]
+  /**
+   * Sell price per age-group product this garment generates (a garment
+   * split into Adults + Kids products commonly sells at two different
+   * price points). Missing a price for a product that will actually be
+   * generated is a blocking export error.
+   */
+  priceByAgeGroup: Partial<Record<AgeGroup, number>>
   sortOrder: number
 }
 

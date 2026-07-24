@@ -62,20 +62,20 @@ demo_project as (
   returning id
 ),
 -- MERDXX = Marine (ME) + Red (RD) + none (XX); MNGOXX = Maroon (MN) + Gold (GO) + none (XX)
-garment_config (name, colours, sizes) as (
+garment_config (name, colours, sizes, prices) as (
   values
-    ('Club Polo',       array['Marine', 'Red'],  array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13']),
-    ('Club Hoodie',      array['Marine', 'Red'],  array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13']),
-    ('Training Tee',     array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13']),
-    ('Training Shorts',  array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13']),
-    ('Playing Shirt SS', array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13']),
-    ('Playing Shirt LS', array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13']),
-    ('Playing Pants',    array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13']),
-    ('Club Cap',         array['Marine', 'Red'],  array['OS']),
-    ('Club Socks',       array['Marine', 'Red'],  array['112','24','47','79','912','1215'])
+    ('Club Polo',       array['Marine', 'Red'],  array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13'], '{"adults": 45, "kids": 38}'::jsonb),
+    ('Club Hoodie',      array['Marine', 'Red'],  array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13'], '{"adults": 58, "kids": 48}'::jsonb),
+    ('Training Tee',     array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13'], '{"adults": 32, "kids": 28}'::jsonb),
+    ('Training Shorts',  array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13'], '{"adults": 35, "kids": 30}'::jsonb),
+    ('Playing Shirt SS', array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13'], '{"adults": 40, "kids": 34}'::jsonb),
+    ('Playing Shirt LS', array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13'], '{"adults": 45, "kids": 38}'::jsonb),
+    ('Playing Pants',    array['Maroon', 'Gold'], array['S','M','L','XL','2XL','3XL','4XL','5XL','6XL','56','78','910','1011','13'], '{"adults": 42, "kids": 36}'::jsonb),
+    ('Club Cap',         array['Marine', 'Red'],  array['OS'], '{"all": 20}'::jsonb),
+    ('Club Socks',       array['Marine', 'Red'],  array['112','24','47','79','912','1215'], '{"all": 15}'::jsonb)
 )
-insert into public.store_garments (project_id, garment_id, colours, selected_size_codes, sort_order)
-select demo_project.id, garments.id, garment_config.colours, garment_config.sizes, row_number() over () - 1
+insert into public.store_garments (project_id, garment_id, colours, selected_size_codes, price_by_age_group, sort_order)
+select demo_project.id, garments.id, garment_config.colours, garment_config.sizes, garment_config.prices, row_number() over () - 1
 from demo_project
 join garment_config on true
 join public.garments on garments.name = garment_config.name;

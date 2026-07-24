@@ -74,12 +74,22 @@ export function validateStoreProject(
     }
   }
 
-  // Zero-size garments are a non-blocking warning: they simply produce no variants.
   for (const product of products) {
+    // Zero-size garments are a non-blocking warning: they simply produce no variants.
     if (product.variants.length === 0) {
       warnings.push({
         code: 'NO_SIZES_SELECTED',
         message: `"${product.productName}" has no sizes selected and will produce no variants.`,
+        storeGarmentId: product.storeGarmentId,
+      })
+      continue
+    }
+    // A product that will actually be created needs a price — missing one
+    // would ship a free product.
+    if (product.price === null) {
+      errors.push({
+        code: 'MISSING_PRICE',
+        message: `"${product.productName}" has no price set.`,
         storeGarmentId: product.storeGarmentId,
       })
     }

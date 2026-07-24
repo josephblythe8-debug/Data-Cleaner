@@ -25,6 +25,7 @@ export function cloneStoreGarments(
       customName: cg.customName,
       colours: cg.colours,
       selectedSizeCodes: cg.selectedSizeCodes,
+      priceByAgeGroup: cg.priceByAgeGroup,
       sortOrder: index,
     }))
 }

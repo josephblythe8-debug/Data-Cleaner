@@ -3,7 +3,7 @@
  * swapping the data client for a real Supabase-backed one is a drop-in
  * change. Also used as the source for `supabase/seed.sql`.
  */
-import { getAvailableSizes } from './sizeTemplates'
+import { getAvailableSizes, type AgeGroup } from './sizeTemplates'
 import type { Club, ColourName, Garment, StoreGarment, StoreProject } from './types'
 
 // The colour library: name -> 2-letter abbreviation used to build the
@@ -186,6 +186,21 @@ function garment(id: string): Garment {
   return g
 }
 
+// Demo pricing per garment, keyed by the age group(s) it actually produces
+// products for (osfa/socks are a single "all" product — see
+// resolveGarmentSizeGroups in sizeTemplates.ts).
+const DEMO_PRICES: Record<string, Partial<Record<AgeGroup, number>>> = {
+  garment_club_polo: { adults: 45, kids: 38 },
+  garment_club_hoodie: { adults: 58, kids: 48 },
+  garment_training_tee: { adults: 32, kids: 28 },
+  garment_training_shorts: { adults: 35, kids: 30 },
+  garment_playing_shirt_ss: { adults: 40, kids: 34 },
+  garment_playing_shirt_ls: { adults: 45, kids: 38 },
+  garment_playing_pants: { adults: 42, kids: 36 },
+  garment_club_cap: { all: 20 },
+  garment_club_socks: { all: 15 },
+}
+
 // A fully-configured demo store, so mock mode has something to look at
 // (Dashboard, Preview, CSV export) without requiring a click-through first.
 export const seedStoreGarments: StoreGarment[] = [
@@ -208,6 +223,7 @@ export const seedStoreGarments: StoreGarment[] = [
     customName: null,
     colours,
     selectedSizeCodes: allSizeCodes(g),
+    priceByAgeGroup: DEMO_PRICES[garmentId] ?? {},
     sortOrder: index,
   }
 })

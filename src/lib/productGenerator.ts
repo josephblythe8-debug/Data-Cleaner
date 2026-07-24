@@ -33,6 +33,8 @@ export interface GeneratedProduct {
   ageGroup: SizeGroup['ageGroup']
   colourCode: string
   parentSku: string
+  /** null when no price has been set for this age-group product yet. */
+  price: number | null
   variants: GeneratedVariant[]
 }
 
@@ -91,6 +93,7 @@ export function generateProducts(
         ageGroup: group.ageGroup,
         colourCode,
         parentSku: buildParentSku({ ...garment, colourCode }, club.clubCode, AGE_GROUP_SKU_SEGMENT[group.ageGroup]),
+        price: cg.priceByAgeGroup[group.ageGroup] ?? null,
         variants,
       }
     })

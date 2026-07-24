@@ -35,10 +35,10 @@ export interface ExportRow {
   brandName: string
 }
 
-// Pricing/weight are not yet part of the data model (no price field on
-// garments or store_garments), so parent rows export these as placeholder
-// defaults the coordinator fills in during BigCommerce review.
-const DEFAULT_PRICE = '0.00'
+// Weight isn't part of the data model yet, so parent rows export a
+// placeholder the coordinator fills in during BigCommerce review. Price
+// comes from StoreGarment.priceByAgeGroup — the validation engine blocks
+// export if a product that will actually be created has no price set.
 const DEFAULT_WEIGHT = '0.00'
 
 /**
@@ -65,7 +65,7 @@ export function buildExportRows(products: GeneratedProduct[], club: Club | undef
       productName: product.productName,
       productType: 'Physical',
       sku: product.parentSku,
-      price: DEFAULT_PRICE,
+      price: product.price !== null ? product.price.toFixed(2) : '',
       weight: DEFAULT_WEIGHT,
       allowPurchases: 'Y',
       trackInventory: 'Y',

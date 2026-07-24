@@ -85,15 +85,17 @@ export function ageGroupForSizeCode(code: string): 'adults' | 'kids' | null {
   return null
 }
 
+/**
+ * "all" means a garment's sizes aren't split by age at all (socks,
+ * headwear) — a single product covers everyone. "adults"/"kids" become
+ * separate products, since real-world pricing (and the parent SKU's
+ * ADLT/KIDS segment) differs per age group.
+ */
+export type AgeGroup = 'adults' | 'kids' | 'all'
+
 /** A garment's size list for one age group, e.g. all its selected adult sizes. */
 export interface SizeGroup {
-  /**
-   * "all" means the sizes aren't split by age at all (socks, headwear) —
-   * a single product covers everyone. "adults"/"kids" become separate
-   * products, since real-world pricing (and the parent SKU's ADLT/KIDS
-   * segment) differs per age group.
-   */
-  ageGroup: 'adults' | 'kids' | 'all'
+  ageGroup: AgeGroup
   sizes: SizeDef[]
 }
 

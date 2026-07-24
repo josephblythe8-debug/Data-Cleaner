@@ -128,6 +128,9 @@ export function Preview() {
                 {product.ageGroup !== 'all' && (
                   <Badge variant="secondary">{product.ageGroup === 'adults' ? 'Adults' : 'Kids'}</Badge>
                 )}
+                <Badge variant={product.price !== null ? 'outline' : 'destructive'}>
+                  {product.price !== null ? `$${product.price.toFixed(2)}` : 'No price'}
+                </Badge>
                 <Badge variant="outline">{product.variants.length} variants</Badge>
               </div>
             </CardHeader>

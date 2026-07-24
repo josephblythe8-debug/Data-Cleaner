@@ -9,12 +9,13 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
-import { ArrowRight, Plus, Search } from 'lucide-react'
+import { ArrowRight, Plus, Search, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ConfiguredGarmentCard } from '@/components/store-builder/ConfiguredGarmentCard'
 import { AddGarmentDialog } from '@/components/store-builder/AddGarmentDialog'
+import { ImportBriefDialog } from '@/components/store-builder/ImportBriefDialog'
 import { useStoreProject } from '@/hooks/useStoreProject'
 
 export function StoreBuilderConfigure() {
@@ -27,6 +28,7 @@ export function StoreBuilderConfigure() {
     club,
     configuredGarments,
     addGarments,
+    importGarments,
     removeGarment,
     duplicateGarment,
     updateGarment,
@@ -59,6 +61,7 @@ export function StoreBuilderConfigure() {
 
   const [search, setSearch] = useState('')
   const [addOpen, setAddOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -99,6 +102,9 @@ export function StoreBuilderConfigure() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload /> Import Brief
+          </Button>
           <Button variant="outline" onClick={() => setAddOpen(true)}>
             <Plus /> Add Garments
           </Button>
@@ -123,9 +129,14 @@ export function StoreBuilderConfigure() {
           <p className="text-sm text-slate-500 dark:text-slate-400">
             No garments yet. Add some from the library to get started.
           </p>
-          <Button onClick={() => setAddOpen(true)}>
-            <Plus /> Add Garments
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload /> Import Brief
+            </Button>
+            <Button onClick={() => setAddOpen(true)}>
+              <Plus /> Add Garments
+            </Button>
+          </div>
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -160,6 +171,15 @@ export function StoreBuilderConfigure() {
         existingGarmentIds={existingGarmentIds}
         onAdd={(garmentIds) => {
           void addGarments(garmentIds)
+        }}
+      />
+
+      <ImportBriefDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        existingGarmentIds={existingGarmentIds}
+        onImport={(entries) => {
+          void importGarments(entries)
         }}
       />
     </div>

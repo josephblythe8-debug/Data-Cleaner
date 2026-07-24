@@ -75,6 +75,9 @@ create table if not exists public.store_garments (
   colours text[] not null default '{}',
   -- Exact size codes this club needs, e.g. ARRAY['S', 'M', 'L'] — never a blanket toggle.
   selected_size_codes text[] not null default '{}',
+  -- Price per age-group product this garment produces, e.g. {"adults": 45, "kids": 38}
+  -- or {"all": 20} for garments not split by age (socks, headwear). Keys are AgeGroup values.
+  price_by_age_group jsonb not null default '{}',
   sort_order integer not null default 0,
   constraint store_garments_colours_max_3 check (array_length(colours, 1) is null or array_length(colours, 1) <= 3)
 );
