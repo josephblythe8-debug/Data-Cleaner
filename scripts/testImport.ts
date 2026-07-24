@@ -11,6 +11,7 @@
  */
 import { parseBrief, runBriefParserAssertions } from '../src/lib/briefParser'
 import { matchBriefLines, runMatcherAssertions } from '../src/lib/garmentMatcher'
+import { runSpreadsheetParserAssertions } from '../src/lib/spreadsheetParser'
 import { seedGarments } from '../src/lib/mockData'
 
 function section(title: string) {
@@ -39,6 +40,7 @@ function runAssertions(title: string, assertions: { description: string; actual:
 
 runAssertions('1. Brief parser assertions', runBriefParserAssertions())
 runAssertions('2. Garment matcher assertions', runMatcherAssertions())
+runAssertions('2b. Spreadsheet parser assertions', runSpreadsheetParserAssertions())
 
 if (exitCode !== 0) {
   console.error('\nAssertions FAILED. Aborting before sample brief.')

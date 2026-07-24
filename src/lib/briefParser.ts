@@ -21,11 +21,27 @@ export interface ParsedBriefLine {
 // don't get misread as a price.
 const PRICE_PATTERN = /(?:AUD|USD|NZD)?\s*\$\s*(\d{1,5}(?:\.\d{2})?)|(\d{1,5}\.\d{2})\s*(?:AUD|USD|NZD)?/gi
 
-const HEADER_WORDS = new Set(['product', 'products', 'item', 'items', 'description', 'price', 'qty', 'quantity'])
+export const HEADER_WORDS = new Set(['product', 'products', 'item', 'items', 'description', 'price', 'qty', 'quantity'])
 
 // Priceless lines that read as email chrome (greeting/sign-off/instruction),
 // not a product — e.g. "Hi team," or "Please set up the following:".
 const CHROME_PATTERN = /^(hi|hello|hey|thanks|thank you|regards|cheers|best|kind regards|dear|please)\b/i
+
+/**
+ * True for a candidate product name that's actually a table header, section
+ * label, or email greeting/sign-off — shared by the plain-text parser below
+ * and the spreadsheet parser (spreadsheetParser.ts), so a "Product | Price"
+ * header row is skipped the same way whether it came from a pasted email or
+ * a spreadsheet column heading.
+ */
+export function isNonProductLine(productName: string, hasPrice: boolean): boolean {
+  const normalized = productName.toLowerCase().replace(/[^a-z]/g, '')
+  if (HEADER_WORDS.has(normalized)) return true
+  if (hasPrice) return false
+  if (/:$/.test(productName)) return true
+  if (CHROME_PATTERN.test(productName)) return true
+  return false
+}
 
 function extractPrice(line: string): { price: number | null; withoutPrice: string } {
   const matches = [...line.matchAll(PRICE_PATTERN)]
@@ -58,10 +74,7 @@ export function parseBrief(text: string): ParsedBriefLine[] {
     // Skip obvious table headers / section labels ("Product", "Price",
     // "Product List:", ...) — a priceless line ending in ":" is a section
     // label, not an item; a priceless single header word is a column title.
-    const normalized = productName.toLowerCase().replace(/[^a-z]/g, '')
-    if (HEADER_WORDS.has(normalized)) continue
-    if (price === null && /:$/.test(productName)) continue
-    if (price === null && CHROME_PATTERN.test(productName)) continue
+    if (isNonProductLine(productName, price !== null)) continue
 
     results.push({ raw: trimmed, productName, price })
   }

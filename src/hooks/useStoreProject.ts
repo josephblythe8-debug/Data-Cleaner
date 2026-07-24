@@ -16,7 +16,8 @@ export interface StoreGarmentPatch {
 
 export interface ImportGarmentEntry {
   garmentId: string
-  price: number
+  /** Omitted when the brief didn't include a price — it can be added later in Configure Store. */
+  price?: number
 }
 
 function clubsSnapshot() {
@@ -190,7 +191,7 @@ export function useStoreProject(projectId: string | undefined) {
           const g = garmentsById.get(garmentId)
           return g ? { g, price } : null
         })
-        .filter((e): e is { g: Garment; price: number } => e !== null)
+        .filter((e): e is { g: Garment; price: number | undefined } => e !== null)
         .map(({ g, price }, i) => ({
           id: generateId('sg'),
           projectId,
@@ -198,7 +199,7 @@ export function useStoreProject(projectId: string | undefined) {
           customName: null,
           colours: [],
           selectedSizeCodes: defaultSizeCodes(g),
-          priceByAgeGroup: { adults: price, kids: price, all: price },
+          priceByAgeGroup: price !== undefined ? { adults: price, kids: price, all: price } : {},
           sortOrder: startIndex + i,
         }))
       if (MOCK_MODE) {

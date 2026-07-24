@@ -84,12 +84,13 @@ export function validateStoreProject(
       })
       continue
     }
-    // A product that will actually be created needs a price — missing one
-    // would ship a free product.
+    // Price is optional at export time — a coordinator may not have it yet
+    // and can add it later. Flagged as a warning so it isn't missed, but it
+    // doesn't block the CSV (price exports blank, same as an unset field).
     if (product.price === null) {
-      errors.push({
+      warnings.push({
         code: 'MISSING_PRICE',
-        message: `"${product.productName}" has no price set.`,
+        message: `"${product.productName}" has no price set yet.`,
         storeGarmentId: product.storeGarmentId,
       })
     }
