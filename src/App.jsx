@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, Copy, Download, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Copy, Download, ChevronDown, ChevronUp, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 
 const COLOURS = [
   { code: 'AM', name: 'Amber' },
@@ -134,6 +134,17 @@ function generateColourCode(name, usedCodes) {
   return unique[0] || 'XX';
 }
 
+function productBaseSku(p) {
+  return `${p.rangeCode}-${p.styleCode}-0-${p.teamCode}-${p.colourCode}-ALL`;
+}
+
+function productVariantSkus(p) {
+  return p.sizes.map((s) => ({
+    sku: `${p.rangeCode}-${p.styleCode}-0-${p.teamCode}-${p.colourCode}-${s.code}`,
+    label: s.label,
+  }));
+}
+
 export default function SkuGenerator() {
   const [form, setForm] = useState(emptyForm);
   const [colours, setColours] = useState(['', '', '']);
@@ -212,6 +223,40 @@ export default function SkuGenerator() {
 
   const officialCodes = useMemo(() => COLOURS.map((c) => c.code), []);
 
+  const duplicateGroups = useMemo(() => {
+    const map = new Map();
+    products.forEach((p) => {
+      const entries = [{ sku: productBaseSku(p), label: 'Product row (ALL)' }, ...productVariantSkus(p)];
+      entries.forEach(({ sku, label }) => {
+        if (!map.has(sku)) map.set(sku, []);
+        map.get(sku).push({ product: p, label });
+      });
+    });
+    return Array.from(map.entries())
+      .filter(([, entries]) => entries.length > 1)
+      .map(([sku, entries]) => ({ sku, entries }));
+  }, [products]);
+
+  const pendingBaseSku =
+    form.rangeCode.trim() && form.styleCode.trim() && form.teamCode.trim()
+      ? `${form.rangeCode.trim().toUpperCase()}-${form.styleCode.trim().toUpperCase()}-0-${form.teamCode
+          .trim()
+          .toUpperCase()}-${colourCode}-ALL`
+      : null;
+
+  const pendingDuplicate = pendingBaseSku
+    ? products.find((p) => productBaseSku(p) === pendingBaseSku)
+    : null;
+
+  const duplicateSkuSet = useMemo(
+    () => new Set(duplicateGroups.map((g) => g.sku)),
+    [duplicateGroups]
+  );
+
+  const isProductDuplicated = (p) =>
+    duplicateSkuSet.has(productBaseSku(p)) ||
+    productVariantSkus(p).some((v) => duplicateSkuSet.has(v.sku));
+
   const handleCustomNameChange = (i, name) => {
     const next = customColours.map((c) => ({ ...c }));
     next[i].name = name;
@@ -258,7 +303,7 @@ export default function SkuGenerator() {
   });
 
   const addProduct = () => {
-    if (errors.length > 0) return;
+    if (errors.length > 0 || pendingDuplicate) return;
     const teamCode = form.teamCode.trim().toUpperCase();
     const clubName = form.clubName.trim();
     const newProduct = {
@@ -288,6 +333,16 @@ export default function SkuGenerator() {
   };
 
   const removeProduct = (id) => setProducts((prev) => prev.filter((p) => p.id !== id));
+
+  const moveProduct = (index, direction) => {
+    setProducts((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
 
   const duplicateForRecolour = (p) => {
     setForm({
@@ -586,11 +641,18 @@ export default function SkuGenerator() {
                   <AlertCircle size={12} className="mt-0.5 flex-shrink-0" /> Missing: {errors.join(', ')}
                 </p>
               )}
+              {pendingDuplicate && (
+                <p className="text-xs text-red-600 flex items-start gap-1 mb-3">
+                  <AlertCircle size={12} className="mt-0.5 flex-shrink-0" />
+                  Duplicate SKU — this matches "{pendingDuplicate.productName}" already in the list. Change the
+                  Range code, Style code, Team code, or a Colour so the codes don't match.
+                </p>
+              )}
               <button
                 onClick={addProduct}
-                disabled={errors.length > 0}
+                disabled={errors.length > 0 || !!pendingDuplicate}
                 className={`w-full flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-medium ${
-                  errors.length > 0
+                  errors.length > 0 || pendingDuplicate
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                     : 'bg-slate-800 text-white hover:bg-slate-700'
                 }`}
@@ -625,14 +687,47 @@ export default function SkuGenerator() {
               </div>
             </div>
 
+            {duplicateGroups.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h2 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-1.5">
+                  <AlertCircle size={14} /> {duplicateGroups.length} duplicate SKU{duplicateGroups.length > 1 ? 's' : ''}{' '}
+                  found
+                </h2>
+                <div className="space-y-2 mb-2">
+                  {duplicateGroups.map(({ sku, entries }) => (
+                    <div key={sku} className="text-xs">
+                      <div className="font-mono bg-red-100 text-red-800 rounded px-1.5 py-0.5 inline-block mb-1 break-all">
+                        {sku}
+                      </div>
+                      <div className="text-red-600">
+                        Used by:{' '}
+                        {entries
+                          .map((e) => `${e.product.teamCode} - ${e.product.productName} (${e.label})`)
+                          .join(', ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-red-600">
+                  Fix: change the Range code, Style code, Team code, or a Colour on one of the products above so its
+                  codes no longer match another product's.
+                </p>
+              </div>
+            )}
+
             {products.length === 0 && (
               <div className="bg-white border border-dashed border-slate-300 rounded-lg p-10 text-center text-sm text-slate-400">
                 No products added yet. Fill in the form on the left and add your first product.
               </div>
             )}
 
-            {products.map((p) => (
-              <div key={p.id} className="bg-white border border-slate-200 rounded-lg p-4">
+            {products.map((p, idx) => (
+              <div
+                key={p.id}
+                className={`bg-white border rounded-lg p-4 ${
+                  isProductDuplicated(p) ? 'border-red-300' : 'border-slate-200'
+                }`}
+              >
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <div className="font-medium text-sm text-slate-800">
@@ -643,6 +738,22 @@ export default function SkuGenerator() {
                     </div>
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => moveProduct(idx, -1)}
+                      disabled={idx === 0}
+                      title="Move up"
+                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ArrowUp size={14} />
+                    </button>
+                    <button
+                      onClick={() => moveProduct(idx, 1)}
+                      disabled={idx === products.length - 1}
+                      title="Move down"
+                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ArrowDown size={14} />
+                    </button>
                     <button
                       onClick={() => duplicateForRecolour(p)}
                       title="Load into form to recolour"
