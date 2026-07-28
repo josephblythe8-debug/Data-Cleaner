@@ -192,6 +192,14 @@ const SIZE_CATEGORIES = [
   },
 ];
 
+const CATEGORY_ICONS = {
+  kids: '🧒',
+  unisex: '👕',
+  ladiesNum: '👗',
+  ladiesLetter: '👗',
+  osfa: '🏷️',
+};
+
 const emptyForm = {
   teamCode: '',
   clubName: '',
@@ -249,6 +257,7 @@ export default function SkuGenerator() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [saveStatus, setSaveStatus] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
 
   useEffect(() => {
     try {
@@ -447,6 +456,8 @@ export default function SkuGenerator() {
     setColours(['', '', '']);
     setCustomColours([{ name: '', code: '' }, { name: '', code: '' }, { name: '', code: '' }]);
     setSelectedSizes({});
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1400);
   };
 
   const removeProduct = (id) => setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -574,23 +585,31 @@ export default function SkuGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900" style={{ fontFamily: "'Aptos Narrow','Segoe UI',sans-serif" }}>
+    <div
+      className="min-h-screen bg-gradient-to-b from-oneills-50 via-white to-white text-slate-900"
+      style={{ fontFamily: "'Aptos Narrow','Segoe UI',sans-serif" }}
+    >
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex items-baseline justify-between mb-5">
+        <div className="rounded-xl bg-gradient-to-r from-oneills-800 via-oneills-700 to-oneills-600 text-white px-5 py-4 mb-5 shadow-lg flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">ClubHub SKU generator</h1>
-            <p className="text-sm text-slate-500">Build a product upload CSV, formatted exactly to spec</p>
+            <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+              🏆 ClubHub SKU Generator
+            </h1>
+            <p className="text-sm text-oneills-50/90">
+              Build a product upload CSV, formatted exactly to spec — the fun way.
+            </p>
           </div>
-          <div className="text-right text-sm text-slate-500">
-            <div>{products.length} products · {totalSkuRows} SKU rows</div>
+          <div className="text-right text-sm bg-white/15 rounded-lg px-3 py-1.5 backdrop-blur-sm">
+            <div className="font-semibold">{products.length} products</div>
+            <div className="text-oneills-50/80 text-xs">{totalSkuRows} SKU rows</div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
           {/* Left: form */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-slate-700 mb-3">Club</h2>
+            <div className="bg-white border border-slate-200 border-l-4 border-l-oneills-500 rounded-lg p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-slate-700 mb-3">🏟️ Club</h2>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Team code</label>
@@ -598,7 +617,7 @@ export default function SkuGenerator() {
                     value={form.teamCode}
                     onChange={(e) => setForm({ ...form, teamCode: e.target.value.toUpperCase() })}
                     placeholder="SHWD"
-                    className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm uppercase font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm uppercase font-mono focus:outline-none focus:ring-2 focus:ring-oneills-400 focus:border-oneills-500"
                   />
                 </div>
                 <div>
@@ -607,14 +626,14 @@ export default function SkuGenerator() {
                     value={form.clubName}
                     onChange={(e) => setForm({ ...form, clubName: e.target.value })}
                     placeholder="Sherwood AFC"
-                    className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-oneills-400 focus:border-oneills-500"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-slate-700 mb-3">Product</h2>
+            <div className="bg-white border border-slate-200 border-l-4 border-l-oneills-500 rounded-lg p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-slate-700 mb-3">👕 Product</h2>
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Product name</label>
@@ -622,7 +641,7 @@ export default function SkuGenerator() {
                     value={form.productName}
                     onChange={(e) => setForm({ ...form, productName: e.target.value })}
                     placeholder="Anzac Guernsey"
-                    className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-oneills-400 focus:border-oneills-500"
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
@@ -633,7 +652,7 @@ export default function SkuGenerator() {
                       value={form.price}
                       onChange={(e) => setForm({ ...form, price: e.target.value })}
                       placeholder="89"
-                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-oneills-400 focus:border-oneills-500"
                     />
                   </div>
                   <div>
@@ -642,7 +661,7 @@ export default function SkuGenerator() {
                       value={form.rangeCode}
                       onChange={(e) => setForm({ ...form, rangeCode: e.target.value.toUpperCase() })}
                       placeholder="TEAM"
-                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm uppercase font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm uppercase font-mono focus:outline-none focus:ring-2 focus:ring-oneills-400 focus:border-oneills-500"
                     />
                   </div>
                   <div>
@@ -651,42 +670,75 @@ export default function SkuGenerator() {
                       value={form.styleCode}
                       onChange={(e) => setForm({ ...form, styleCode: e.target.value.toUpperCase() })}
                       placeholder="258"
-                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm uppercase font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm uppercase font-mono focus:outline-none focus:ring-2 focus:ring-oneills-400 focus:border-oneills-500"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-slate-700 mb-3">Colours <span className="text-xs font-normal text-slate-400">(up to 3 — unused slots become XX)</span></h2>
+            <div className="bg-white border border-slate-200 border-l-4 border-l-oneills-500 rounded-lg p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-slate-700 mb-3">
+                🎨 Colourway <span className="text-xs font-normal text-slate-400">(up to 3 — unused slots become XX)</span>
+              </h2>
               <div className="grid grid-cols-3 gap-2">
                 {[0, 1, 2].map((i) => (
                   <div key={i}>
-                    <select
-                      value={colours[i]}
-                      onChange={(e) => {
-                        const next = [...colours];
-                        next[i] = e.target.value;
-                        setColours(next);
-                      }}
-                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-slate-400"
-                    >
-                      <option value="">— none —</option>
+                    <div className="grid grid-cols-4 gap-1 p-1.5 bg-oneills-50/60 border border-oneills-100 rounded-lg">
+                      <button
+                        type="button"
+                        title="No colour"
+                        onClick={() => {
+                          const next = [...colours];
+                          next[i] = '';
+                          setColours(next);
+                        }}
+                        className={`w-6 h-6 rounded-full bg-white border-2 flex items-center justify-center text-[10px] text-slate-400 hover:scale-110 transition-transform ${
+                          colours[i] === '' ? 'ring-2 ring-oneills-600 ring-offset-1 border-white' : 'border-slate-200'
+                        }`}
+                      >
+                        ✕
+                      </button>
                       {COLOURS.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.code} · {c.name}
-                        </option>
+                        <button
+                          key={c.code}
+                          type="button"
+                          title={`${c.name} (${c.code})`}
+                          onClick={() => {
+                            const next = [...colours];
+                            next[i] = c.code;
+                            setColours(next);
+                          }}
+                          style={{ background: SWATCH_HEX[c.code] }}
+                          className={`w-6 h-6 rounded-full border-2 border-white shadow hover:scale-110 transition-transform ${
+                            colours[i] === c.code ? 'ring-2 ring-oneills-600 ring-offset-1 scale-110' : ''
+                          }`}
+                        />
                       ))}
-                      <option value="CUSTOM">✎ Custom colour...</option>
-                    </select>
+                      <button
+                        type="button"
+                        title="Custom colour"
+                        onClick={() => {
+                          const next = [...colours];
+                          next[i] = 'CUSTOM';
+                          setColours(next);
+                        }}
+                        className={`w-6 h-6 rounded-full bg-white border-2 border-dashed flex items-center justify-center text-[10px] hover:scale-110 transition-transform ${
+                          colours[i] === 'CUSTOM'
+                            ? 'ring-2 ring-oneills-600 ring-offset-1 border-oneills-500 text-oneills-700'
+                            : 'border-slate-300 text-slate-400'
+                        }`}
+                      >
+                        ✎
+                      </button>
+                    </div>
                     {colours[i] === 'CUSTOM' ? (
                       <div className="mt-1.5 space-y-1">
                         <input
                           value={customColours[i].name}
                           onChange={(e) => handleCustomNameChange(i, e.target.value)}
                           placeholder="Colour name"
-                          className="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-400"
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-oneills-400 focus:border-oneills-500"
                         />
                         <div className="flex items-center gap-1.5">
                           <span className="w-4 h-4 rounded-full border border-slate-300 flex-shrink-0 bg-white" />
@@ -702,7 +754,9 @@ export default function SkuGenerator() {
                           className="w-4 h-4 rounded-full border border-slate-300 flex-shrink-0"
                           style={{ background: colours[i] ? SWATCH_HEX[colours[i]] : '#fff' }}
                         />
-                        <span className="text-xs font-mono text-slate-500">{colours[i] || 'XX'}</span>
+                        <span className="text-xs font-mono text-slate-500">
+                          {colours[i] ? colourName(colours[i]) : 'None'} · {colours[i] || 'XX'}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -715,15 +769,15 @@ export default function SkuGenerator() {
               )}
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-slate-700 mb-3">Sizes</h2>
+            <div className="bg-white border border-slate-200 border-l-4 border-l-oneills-500 rounded-lg p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-slate-700 mb-3">📏 Sizes</h2>
               <div className="space-y-2">
                 {SIZE_CATEGORIES.map((cat) => (
-                  <div key={cat.id} className="border border-slate-200 rounded">
+                  <div key={cat.id} className="border border-slate-200 rounded-lg overflow-hidden">
                     <button
                       type="button"
                       onClick={() => setOpenCats((o) => ({ ...o, [cat.id]: !o[cat.id] }))}
-                      className="w-full flex items-center justify-between px-3 py-2 text-left"
+                      className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-oneills-50/60 transition-colors"
                     >
                       <span className="flex items-center gap-2 text-sm">
                         <input
@@ -737,9 +791,11 @@ export default function SkuGenerator() {
                             toggleCategoryAll(cat, !catAllOn(cat));
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="rounded"
+                          className="rounded accent-oneills-600"
                         />
-                        <span className="font-medium text-slate-700">{cat.label}</span>
+                        <span className="font-medium text-slate-700">
+                          {CATEGORY_ICONS[cat.id]} {cat.label}
+                        </span>
                         <span className="text-xs text-slate-400">
                           ({cat.sizes.filter((s) => selectedSizes[s.code]).length}/{cat.sizes.length})
                         </span>
@@ -751,8 +807,10 @@ export default function SkuGenerator() {
                         {cat.sizes.map((s) => (
                           <label
                             key={s.code}
-                            className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded cursor-pointer border ${
-                              selectedSizes[s.code] ? 'bg-slate-800 text-white border-slate-800' : 'bg-slate-50 border-slate-200 text-slate-600'
+                            className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-full cursor-pointer border transition-all ${
+                              selectedSizes[s.code]
+                                ? 'bg-oneills-600 text-white border-oneills-600 shadow-sm scale-[1.03]'
+                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-oneills-300'
                             }`}
                           >
                             <input
@@ -771,16 +829,18 @@ export default function SkuGenerator() {
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-lg p-4">
-              <div className="text-xs text-slate-500 mb-1">Base SKU preview</div>
-              <div className="font-mono text-sm text-slate-800 break-all mb-3">{baseSku}</div>
-              <div className="flex flex-wrap gap-1 text-[10px] text-slate-400 mb-3">
-                <span className="px-1.5 py-0.5 bg-slate-100 rounded">RANGE</span>
-                <span className="px-1.5 py-0.5 bg-slate-100 rounded">STYLE</span>
-                <span className="px-1.5 py-0.5 bg-slate-100 rounded">0</span>
-                <span className="px-1.5 py-0.5 bg-slate-100 rounded">TEAM</span>
-                <span className="px-1.5 py-0.5 bg-slate-100 rounded">COLOUR ×3</span>
-                <span className="px-1.5 py-0.5 bg-slate-100 rounded">SIZE</span>
+            <div className="bg-white border border-slate-200 border-l-4 border-l-gold-500 rounded-lg p-4 shadow-sm">
+              <div className="text-xs text-slate-500 mb-1">✨ Base SKU preview</div>
+              <div className="font-mono text-sm text-oneills-800 bg-oneills-50 border border-oneills-100 rounded px-2 py-1.5 break-all mb-3">
+                {baseSku}
+              </div>
+              <div className="flex flex-wrap gap-1 text-[10px] text-oneills-700 mb-3">
+                <span className="px-1.5 py-0.5 bg-oneills-100 rounded-full">RANGE</span>
+                <span className="px-1.5 py-0.5 bg-oneills-100 rounded-full">STYLE</span>
+                <span className="px-1.5 py-0.5 bg-oneills-100 rounded-full">0</span>
+                <span className="px-1.5 py-0.5 bg-oneills-100 rounded-full">TEAM</span>
+                <span className="px-1.5 py-0.5 bg-gold-100 text-gold-700 rounded-full">COLOUR ×3</span>
+                <span className="px-1.5 py-0.5 bg-oneills-100 rounded-full">SIZE</span>
               </div>
               {errors.length > 0 && (
                 <p className="text-xs text-amber-600 flex items-start gap-1 mb-3">
@@ -808,36 +868,42 @@ export default function SkuGenerator() {
               <button
                 onClick={addProduct}
                 disabled={errors.length > 0 || !!pendingDuplicate}
-                className={`w-full flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-medium ${
+                className={`w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
                   errors.length > 0 || pendingDuplicate
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    : 'bg-slate-800 text-white hover:bg-slate-700'
-                }`}
+                    : 'bg-oneills-600 text-white hover:bg-oneills-700 hover:scale-[1.01] shadow-sm'
+                } ${justAdded && errors.length === 0 && !pendingDuplicate ? 'ring-2 ring-gold-400' : ''}`}
               >
-                <Plus size={16} /> Add product to list
+                {justAdded && errors.length === 0 && !pendingDuplicate ? (
+                  <>🎉 Added!</>
+                ) : (
+                  <>
+                    <Plus size={16} /> Add product to list
+                  </>
+                )}
               </button>
             </div>
           </div>
 
           {/* Right: product list */}
           <div className="lg:col-span-3 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between shadow-sm">
               <div className="text-sm text-slate-500">
                 {saveStatus && <span className="text-amber-600">{saveStatus}</span>}
-                {!saveStatus && 'Saved automatically as you go'}
+                {!saveStatus && '💾 Saved automatically as you go'}
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={clearAll}
                   disabled={products.length === 0}
-                  className="text-xs px-3 py-1.5 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Clear list
                 </button>
                 <button
                   onClick={exportCsv}
                   disabled={products.length === 0}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-slate-800 text-white rounded hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gold-500 text-oneills-900 font-semibold rounded-lg hover:bg-gold-400 hover:scale-[1.03] transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   <Download size={14} /> Export CSV
                 </button>
@@ -885,7 +951,8 @@ export default function SkuGenerator() {
             )}
 
             {products.length === 0 && (
-              <div className="bg-white border border-dashed border-slate-300 rounded-lg p-10 text-center text-sm text-slate-400">
+              <div className="bg-white border-2 border-dashed border-oneills-200 rounded-lg p-10 text-center text-sm text-slate-400">
+                <div className="text-3xl mb-2">🧦👕🧢</div>
                 No products added yet. Fill in the form on the left and add your first product.
               </div>
             )}
@@ -904,10 +971,10 @@ export default function SkuGenerator() {
                   setDragIndex(null);
                   setDragOverIndex(null);
                 }}
-                className={`bg-white border rounded-lg p-4 transition-colors ${
-                  isProductDuplicated(p) ? 'border-red-300' : 'border-slate-200'
+                className={`bg-white border rounded-lg p-4 transition-colors shadow-sm ${
+                  isProductDuplicated(p) ? 'border-red-300' : 'border-slate-200 hover:border-oneills-200'
                 } ${dragIndex === idx ? 'opacity-40' : ''} ${
-                  dragOverIndex === idx && dragIndex !== idx ? 'border-slate-500 border-2' : ''
+                  dragOverIndex === idx && dragIndex !== idx ? 'border-oneills-500 border-2' : ''
                 }`}
               >
                 <div className="flex items-start justify-between mb-2">
@@ -920,10 +987,21 @@ export default function SkuGenerator() {
                         setDragOverIndex(null);
                       }}
                       title="Drag to reorder"
-                      className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 mt-0.5 flex-shrink-0"
+                      className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-oneills-500 mt-0.5 flex-shrink-0"
                     >
                       <GripVertical size={16} />
                     </span>
+                    <div className="flex items-center gap-0.5 mt-0.5 flex-shrink-0">
+                      {colourCodeSlots(p.colourCode)
+                        .filter((code) => code !== 'XX')
+                        .map((code, ci) => (
+                          <span
+                            key={ci}
+                            className="w-3 h-3 rounded-full border border-white shadow"
+                            style={{ background: SWATCH_HEX[code] || '#ccc' }}
+                          />
+                        ))}
+                    </div>
                     <div>
                       <div className="font-medium text-sm text-slate-800">
                         {p.teamCode} - {p.clubName} - {p.productName}
@@ -937,7 +1015,7 @@ export default function SkuGenerator() {
                     <button
                       onClick={() => duplicateForRecolour(p)}
                       title="Load into form to recolour"
-                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded"
+                      className="p-1.5 text-slate-400 hover:text-oneills-700 hover:bg-oneills-50 rounded"
                     >
                       <Copy size={14} />
                     </button>
