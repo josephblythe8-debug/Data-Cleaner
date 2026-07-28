@@ -1,64 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ClubHub Ops Agent</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header>
-  <h1>ClubHub Ops Agent</h1>
-  <p>Paste or upload order lines as <code>Product Name, Quantity</code> (one per line), then run the agent to validate the order and check minimum order quantities (MOQ).</p>
-</header>
-
-<main>
-  <section class="panel">
-    <h2>Order Input</h2>
-    <div class="upload-row">
-      <label for="orderFileInput" class="button">Upload CSV / TXT File</label>
-      <input id="orderFileInput" type="file" accept=".csv,.txt" class="hidden">
-      <span id="uploadedFileName" class="file-name"></span>
-    </div>
-    <textarea id="orderInput" rows="8" placeholder="Sublimated Jersey, 8&#10;Cotton Rugby Jersey, 24&#10;Socks, 10"></textarea>
-    <button id="runButton" type="button">Run Agent</button>
-  </section>
-
-  <div id="validationBanner" class="banner warning hidden"></div>
-  <div id="moqBanner" class="banner warning hidden"></div>
-  <a id="notifyAdminBtn" class="button hidden" href="#">Notify Admin Team</a>
-
-  <section class="panel">
-    <h2>Results</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Product</th><th>Qty</th><th>Detected Type</th><th>MOQ</th><th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="resultsBody"></tbody>
-    </table>
-  </section>
-
-  <section class="panel">
-    <h2>Product Type Mappings</h2>
-    <p>Map a specific product name to a MOQ category so the agent doesn't have to guess from keywords.</p>
-    <form id="mappingForm">
-      <input id="mappingProduct" type="text" placeholder="Product name" required>
-      <select id="mappingType" required>
-        <option value="" disabled selected>Select type</option>
-        <option value="SUBLIMATED">SUBLIMATED</option>
-        <option value="COTTON_RUGBY_JERSEY">COTTON_RUGBY_JERSEY</option>
-        <option value="WAREHOUSE_STOCK">WAREHOUSE_STOCK</option>
-        <option value="IRELAND_STOCK">IRELAND_STOCK</option>
-        <option value="SOCKS">SOCKS</option>
-      </select>
-      <button type="submit">Add Mapping</button>
-    </form>
-    <ul id="mappingList"></ul>
-  </section>
-</main>
-
-<script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClubHub SKU Generator</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
