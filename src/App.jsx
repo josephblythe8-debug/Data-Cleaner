@@ -85,6 +85,11 @@ const SIZE_CATEGORIES = [
       { code: 'L3XL', label: 'Ladies3XL' },
     ],
   },
+  {
+    id: 'osfa',
+    label: 'One size',
+    sizes: [{ code: 'OS', label: 'OSFA (One Size Fits All)' }],
+  },
 ];
 
 const emptyForm = {
@@ -135,7 +140,7 @@ export default function SkuGenerator() {
   const [customColours, setCustomColours] = useState([{ name: '', code: '' }, { name: '', code: '' }, { name: '', code: '' }]);
   const [selectedSizes, setSelectedSizes] = useState({});
   const [products, setProducts] = useState([]);
-  const [openCats, setOpenCats] = useState({ kids: true, unisex: true, ladiesNum: false, ladiesLetter: false });
+  const [openCats, setOpenCats] = useState({ kids: true, unisex: true, ladiesNum: false, ladiesLetter: false, osfa: true });
   const [saveStatus, setSaveStatus] = useState('');
   const [loaded, setLoaded] = useState(false);
 
