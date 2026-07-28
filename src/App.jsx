@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, Copy, Download, ChevronDown, ChevronUp, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Copy, Download, ChevronDown, ChevronUp, AlertCircle, GripVertical } from 'lucide-react';
 
 const COLOURS = [
   { code: 'AM', name: 'Amber' },
@@ -34,6 +34,59 @@ const SWATCH_HEX = {
   OR: '#D2691E', PK: '#E0729A', PP: '#6A3B8C', RD: '#C0272D', RO: '#1B3F91',
   SK: '#7EC0E0', SV: '#B7B7B7', WH: '#F5F5F5', YW: '#E8C22A', XX: 'transparent',
 };
+
+const COLOUR_FAMILIES = [
+  ['BE', 'ME', 'RO', 'SK'],
+  ['GY', 'DG', 'SV'],
+  ['RD', 'MN'],
+  ['GN', 'BO'],
+  ['BK', 'BG', 'CR', 'WH'],
+  ['YW', 'GO', 'AM'],
+];
+
+function similarColours(code) {
+  const family = COLOUR_FAMILIES.find((f) => f.includes(code));
+  return family ? family.filter((c) => c !== code) : [];
+}
+
+function colourName(code) {
+  return COLOURS.find((c) => c.code === code)?.name.split(' (')[0] || code;
+}
+
+function colourCodeSlots(colourCode) {
+  return colourCode.match(/.{1,2}/g) || [];
+}
+
+function permute3([a, b, c]) {
+  return [
+    [a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a],
+  ];
+}
+
+function suggestColourFix(colourCode, usedByOthers) {
+  const slots = colourCodeSlots(colourCode);
+  const used = new Set(usedByOthers);
+
+  for (const perm of permute3(slots)) {
+    const code = perm.join('');
+    if (code !== colourCode && !used.has(code)) {
+      return `Swap the colour order to ${perm.map((c) => (c === 'XX' ? '—' : colourName(c))).join(' → ')} (${code}) to make the SKU unique.`;
+    }
+  }
+
+  for (let i = 0; i < slots.length; i++) {
+    for (const alt of similarColours(slots[i])) {
+      const candidate = [...slots];
+      candidate[i] = alt;
+      const code = candidate.join('');
+      if (!used.has(code)) {
+        return `Swap ${colourName(slots[i])} for a similar colour, ${colourName(alt)}, in colour slot ${i + 1} (${code}) to make the SKU unique.`;
+      }
+    }
+  }
+
+  return 'Choose a different colour combination for this product to make the SKU unique.';
+}
 
 const SIZE_CATEGORIES = [
   {
@@ -138,13 +191,6 @@ function productBaseSku(p) {
   return `${p.rangeCode}-${p.styleCode}-0-${p.teamCode}-${p.colourCode}-ALL`;
 }
 
-function productVariantSkus(p) {
-  return p.sizes.map((s) => ({
-    sku: `${p.rangeCode}-${p.styleCode}-0-${p.teamCode}-${p.colourCode}-${s.code}`,
-    label: s.label,
-  }));
-}
-
 export default function SkuGenerator() {
   const [form, setForm] = useState(emptyForm);
   const [colours, setColours] = useState(['', '', '']);
@@ -152,6 +198,8 @@ export default function SkuGenerator() {
   const [selectedSizes, setSelectedSizes] = useState({});
   const [products, setProducts] = useState([]);
   const [openCats, setOpenCats] = useState({ kids: true, unisex: true, ladiesNum: false, ladiesLetter: false, osfa: true });
+  const [dragIndex, setDragIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
   const [saveStatus, setSaveStatus] = useState('');
   const [loaded, setLoaded] = useState(false);
 
@@ -223,18 +271,34 @@ export default function SkuGenerator() {
 
   const officialCodes = useMemo(() => COLOURS.map((c) => c.code), []);
 
+  const siblingColourCodes = (product, excludeId) =>
+    products
+      .filter(
+        (q) =>
+          q.id !== excludeId &&
+          q.rangeCode === product.rangeCode &&
+          q.styleCode === product.styleCode &&
+          q.teamCode === product.teamCode
+      )
+      .map((q) => q.colourCode);
+
   const duplicateGroups = useMemo(() => {
     const map = new Map();
     products.forEach((p) => {
-      const entries = [{ sku: productBaseSku(p), label: 'Product row (ALL)' }, ...productVariantSkus(p)];
-      entries.forEach(({ sku, label }) => {
-        if (!map.has(sku)) map.set(sku, []);
-        map.get(sku).push({ product: p, label });
-      });
+      const sku = productBaseSku(p);
+      if (!map.has(sku)) map.set(sku, []);
+      map.get(sku).push(p);
     });
     return Array.from(map.entries())
-      .filter(([, entries]) => entries.length > 1)
-      .map(([sku, entries]) => ({ sku, entries }));
+      .filter(([, group]) => group.length > 1)
+      .map(([sku, group]) => ({
+        sku,
+        group,
+        fixes: group.slice(1).map((p) => ({
+          product: p,
+          suggestion: suggestColourFix(p.colourCode, siblingColourCodes(p, p.id)),
+        })),
+      }));
   }, [products]);
 
   const pendingBaseSku =
@@ -248,14 +312,26 @@ export default function SkuGenerator() {
     ? products.find((p) => productBaseSku(p) === pendingBaseSku)
     : null;
 
+  const pendingColourFix = pendingDuplicate
+    ? suggestColourFix(
+        colourCode,
+        siblingColourCodes(
+          {
+            rangeCode: form.rangeCode.trim().toUpperCase(),
+            styleCode: form.styleCode.trim().toUpperCase(),
+            teamCode: form.teamCode.trim().toUpperCase(),
+          },
+          null
+        )
+      )
+    : null;
+
   const duplicateSkuSet = useMemo(
     () => new Set(duplicateGroups.map((g) => g.sku)),
     [duplicateGroups]
   );
 
-  const isProductDuplicated = (p) =>
-    duplicateSkuSet.has(productBaseSku(p)) ||
-    productVariantSkus(p).some((v) => duplicateSkuSet.has(v.sku));
+  const isProductDuplicated = (p) => duplicateSkuSet.has(productBaseSku(p));
 
   const handleCustomNameChange = (i, name) => {
     const next = customColours.map((c) => ({ ...c }));
@@ -334,12 +410,12 @@ export default function SkuGenerator() {
 
   const removeProduct = (id) => setProducts((prev) => prev.filter((p) => p.id !== id));
 
-  const moveProduct = (index, direction) => {
+  const reorderProduct = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
     setProducts((prev) => {
-      const target = index + direction;
-      if (target < 0 || target >= prev.length) return prev;
       const next = [...prev];
-      [next[index], next[target]] = [next[target], next[index]];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
       return next;
     });
   };
@@ -644,8 +720,7 @@ export default function SkuGenerator() {
               {pendingDuplicate && (
                 <p className="text-xs text-red-600 flex items-start gap-1 mb-3">
                   <AlertCircle size={12} className="mt-0.5 flex-shrink-0" />
-                  Duplicate SKU — this matches "{pendingDuplicate.productName}" already in the list. Change the
-                  Range code, Style code, Team code, or a Colour so the codes don't match.
+                  Duplicate SKU — this matches "{pendingDuplicate.productName}" already in the list. {pendingColourFix}
                 </p>
               )}
               <button
@@ -693,25 +768,23 @@ export default function SkuGenerator() {
                   <AlertCircle size={14} /> {duplicateGroups.length} duplicate SKU{duplicateGroups.length > 1 ? 's' : ''}{' '}
                   found
                 </h2>
-                <div className="space-y-2 mb-2">
-                  {duplicateGroups.map(({ sku, entries }) => (
+                <div className="space-y-3">
+                  {duplicateGroups.map(({ sku, group, fixes }) => (
                     <div key={sku} className="text-xs">
                       <div className="font-mono bg-red-100 text-red-800 rounded px-1.5 py-0.5 inline-block mb-1 break-all">
                         {sku}
                       </div>
-                      <div className="text-red-600">
-                        Used by:{' '}
-                        {entries
-                          .map((e) => `${e.product.teamCode} - ${e.product.productName} (${e.label})`)
-                          .join(', ')}
+                      <div className="text-red-700 mb-1">
+                        Shared by: {group.map((p) => `${p.teamCode} - ${p.productName}`).join(', ')}
                       </div>
+                      {fixes.map(({ product, suggestion }) => (
+                        <div key={product.id} className="text-red-600 pl-2 border-l-2 border-red-200 mb-0.5">
+                          <span className="font-medium">{product.productName}:</span> {suggestion}
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-red-600">
-                  Fix: change the Range code, Style code, Team code, or a Colour on one of the products above so its
-                  codes no longer match another product's.
-                </p>
               </div>
             )}
 
@@ -724,36 +797,47 @@ export default function SkuGenerator() {
             {products.map((p, idx) => (
               <div
                 key={p.id}
-                className={`bg-white border rounded-lg p-4 ${
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (dragIndex !== null && dragIndex !== idx) setDragOverIndex(idx);
+                }}
+                onDragLeave={() => setDragOverIndex((cur) => (cur === idx ? null : cur))}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (dragIndex !== null) reorderProduct(dragIndex, idx);
+                  setDragIndex(null);
+                  setDragOverIndex(null);
+                }}
+                className={`bg-white border rounded-lg p-4 transition-colors ${
                   isProductDuplicated(p) ? 'border-red-300' : 'border-slate-200'
+                } ${dragIndex === idx ? 'opacity-40' : ''} ${
+                  dragOverIndex === idx && dragIndex !== idx ? 'border-slate-500 border-2' : ''
                 }`}
               >
                 <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="font-medium text-sm text-slate-800">
-                      {p.teamCode} - {p.clubName} - {p.productName}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      ${p.price} · {p.colourNames || 'No colour'} · {p.sizes.length} sizes
+                  <div className="flex items-start gap-2">
+                    <span
+                      draggable
+                      onDragStart={() => setDragIndex(idx)}
+                      onDragEnd={() => {
+                        setDragIndex(null);
+                        setDragOverIndex(null);
+                      }}
+                      title="Drag to reorder"
+                      className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 mt-0.5 flex-shrink-0"
+                    >
+                      <GripVertical size={16} />
+                    </span>
+                    <div>
+                      <div className="font-medium text-sm text-slate-800">
+                        {p.teamCode} - {p.clubName} - {p.productName}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        ${p.price} · {p.colourNames || 'No colour'} · {p.sizes.length} sizes
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => moveProduct(idx, -1)}
-                      disabled={idx === 0}
-                      title="Move up"
-                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ArrowUp size={14} />
-                    </button>
-                    <button
-                      onClick={() => moveProduct(idx, 1)}
-                      disabled={idx === products.length - 1}
-                      title="Move down"
-                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ArrowDown size={14} />
-                    </button>
                     <button
                       onClick={() => duplicateForRecolour(p)}
                       title="Load into form to recolour"
