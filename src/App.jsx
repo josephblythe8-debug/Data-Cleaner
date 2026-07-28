@@ -63,29 +63,76 @@ function permute3([a, b, c]) {
   ];
 }
 
-function suggestColourFix(colourCode, usedByOthers) {
+// Reconstructs the per-slot display name (custom-colour-aware) from a product's
+// stored colourCode ('AMBEXX') and colourNames ('Amber / Blue'), since blank
+// slots are omitted from colourNames but always present in colourCode.
+function colourNamesForCode(colourCode, colourNamesJoined) {
   const slots = colourCodeSlots(colourCode);
+  const names = colourNamesJoined ? colourNamesJoined.split(' / ') : [];
+  let ni = 0;
+  return slots.map((code) => {
+    if (code === 'XX') return null;
+    const name = names[ni] ?? colourName(code);
+    ni += 1;
+    return name;
+  });
+}
+
+function slotsToColourCode(slots) {
+  return slots.map((s) => s.code).join('');
+}
+
+function slotsToColourNames(slots) {
+  return slots.filter((s) => s.code !== 'XX').map((s) => s.name).join(' / ');
+}
+
+function computeColourNames(colours, customColours) {
+  return colours
+    .map((c, i) => {
+      if (c === 'CUSTOM') return customColours[i].name.trim();
+      if (!c) return '';
+      return COLOURS.find((x) => x.code === c)?.name.split(' (')[0] || c;
+    })
+    .filter(Boolean)
+    .join(' / ');
+}
+
+// Given a product's current colour slots, finds the first colour-only change
+// (reorder, or swap for a visually similar colour) that avoids collision with
+// `usedByOthers` colour codes. Returns null if no fix could be found.
+function suggestColourFix(colourCode, colourNamesJoined, usedByOthers) {
+  const codes = colourCodeSlots(colourCode);
+  const names = colourNamesForCode(colourCode, colourNamesJoined);
+  const slots = codes.map((code, i) => ({ code, name: names[i] }));
   const used = new Set(usedByOthers);
 
   for (const perm of permute3(slots)) {
-    const code = perm.join('');
+    const code = slotsToColourCode(perm);
     if (code !== colourCode && !used.has(code)) {
-      return `Swap the colour order to ${perm.map((c) => (c === 'XX' ? '—' : colourName(c))).join(' → ')} (${code}) to make the SKU unique.`;
+      return {
+        message: `Reorder the colours to ${perm.map((s) => (s.code === 'XX' ? '—' : s.name)).join(' → ')} (${code}) to make the SKU unique.`,
+        newSlots: perm,
+      };
     }
   }
 
   for (let i = 0; i < slots.length; i++) {
-    for (const alt of similarColours(slots[i])) {
-      const candidate = [...slots];
-      candidate[i] = alt;
-      const code = candidate.join('');
+    for (const alt of similarColours(slots[i].code)) {
+      const candidate = slots.map((s, idx) => (idx === i ? { code: alt, name: colourName(alt) } : s));
+      const code = slotsToColourCode(candidate);
       if (!used.has(code)) {
-        return `Swap ${colourName(slots[i])} for a similar colour, ${colourName(alt)}, in colour slot ${i + 1} (${code}) to make the SKU unique.`;
+        return {
+          message: `Swap ${slots[i].name} for a similar colour, ${colourName(alt)}, in colour slot ${i + 1} (${code}) to make the SKU unique.`,
+          newSlots: candidate,
+        };
       }
     }
   }
 
-  return 'Choose a different colour combination for this product to make the SKU unique.';
+  return {
+    message: 'Choose a different colour combination for this product to make the SKU unique.',
+    newSlots: null,
+  };
 }
 
 const SIZE_CATEGORIES = [
@@ -296,7 +343,7 @@ export default function SkuGenerator() {
         group,
         fixes: group.slice(1).map((p) => ({
           product: p,
-          suggestion: suggestColourFix(p.colourCode, siblingColourCodes(p, p.id)),
+          fix: suggestColourFix(p.colourCode, p.colourNames, siblingColourCodes(p, p.id)),
         })),
       }));
   }, [products]);
@@ -315,6 +362,7 @@ export default function SkuGenerator() {
   const pendingColourFix = pendingDuplicate
     ? suggestColourFix(
         colourCode,
+        computeColourNames(colours, customColours),
         siblingColourCodes(
           {
             rangeCode: form.rangeCode.trim().toUpperCase(),
@@ -391,14 +439,7 @@ export default function SkuGenerator() {
       rangeCode: form.rangeCode.trim().toUpperCase(),
       styleCode: form.styleCode.trim().toUpperCase(),
       colourCode,
-      colourNames: colours
-        .map((c, i) => {
-          if (c === 'CUSTOM') return customColours[i].name.trim();
-          if (!c) return '';
-          return COLOURS.find((x) => x.code === c)?.name.split(' (')[0] || c;
-        })
-        .filter(Boolean)
-        .join(' / '),
+      colourNames: computeColourNames(colours, customColours),
       sizes: chosenSizes,
     };
     setProducts((prev) => [...prev, newProduct]);
@@ -418,6 +459,35 @@ export default function SkuGenerator() {
       next.splice(toIndex, 0, moved);
       return next;
     });
+  };
+
+  const applyColourFixToProduct = (productId, newSlots) => {
+    if (!newSlots) return;
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === productId
+          ? { ...p, colourCode: slotsToColourCode(newSlots), colourNames: slotsToColourNames(newSlots) }
+          : p
+      )
+    );
+  };
+
+  const applyPendingColourFix = (newSlots) => {
+    if (!newSlots) return;
+    const nextColours = ['', '', ''];
+    const nextCustom = [{ name: '', code: '' }, { name: '', code: '' }, { name: '', code: '' }];
+    newSlots.forEach((slot, i) => {
+      if (slot.code === 'XX') return;
+      const isOfficial = COLOURS.some((c) => c.code === slot.code);
+      if (isOfficial) {
+        nextColours[i] = slot.code;
+      } else {
+        nextColours[i] = 'CUSTOM';
+        nextCustom[i] = { name: slot.name, code: slot.code };
+      }
+    });
+    setColours(nextColours);
+    setCustomColours(nextCustom);
   };
 
   const duplicateForRecolour = (p) => {
@@ -718,10 +788,22 @@ export default function SkuGenerator() {
                 </p>
               )}
               {pendingDuplicate && (
-                <p className="text-xs text-red-600 flex items-start gap-1 mb-3">
-                  <AlertCircle size={12} className="mt-0.5 flex-shrink-0" />
-                  Duplicate SKU — this matches "{pendingDuplicate.productName}" already in the list. {pendingColourFix}
-                </p>
+                <div className="mb-3">
+                  <p className="text-xs text-red-600 flex items-start gap-1">
+                    <AlertCircle size={12} className="mt-0.5 flex-shrink-0" />
+                    Duplicate SKU — this matches "{pendingDuplicate.productName}" already in the list.{' '}
+                    {pendingColourFix.message}
+                  </p>
+                  {pendingColourFix.newSlots && (
+                    <button
+                      type="button"
+                      onClick={() => applyPendingColourFix(pendingColourFix.newSlots)}
+                      className="mt-1.5 text-xs px-2.5 py-1 border border-red-300 text-red-700 rounded hover:bg-red-50"
+                    >
+                      Apply suggested fix
+                    </button>
+                  )}
+                </div>
               )}
               <button
                 onClick={addProduct}
@@ -777,9 +859,23 @@ export default function SkuGenerator() {
                       <div className="text-red-700 mb-1">
                         Shared by: {group.map((p) => `${p.teamCode} - ${p.productName}`).join(', ')}
                       </div>
-                      {fixes.map(({ product, suggestion }) => (
-                        <div key={product.id} className="text-red-600 pl-2 border-l-2 border-red-200 mb-0.5">
-                          <span className="font-medium">{product.productName}:</span> {suggestion}
+                      {fixes.map(({ product, fix }) => (
+                        <div
+                          key={product.id}
+                          className="text-red-600 pl-2 border-l-2 border-red-200 mb-1 flex items-start justify-between gap-2"
+                        >
+                          <span>
+                            <span className="font-medium">{product.productName}:</span> {fix.message}
+                          </span>
+                          {fix.newSlots && (
+                            <button
+                              type="button"
+                              onClick={() => applyColourFixToProduct(product.id, fix.newSlots)}
+                              className="flex-shrink-0 text-[11px] px-2 py-0.5 border border-red-300 text-red-700 rounded hover:bg-red-100"
+                            >
+                              Apply fix
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
